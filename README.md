@@ -1,1 +1,0 @@
-# Tibia-8.6-Bot-Source
