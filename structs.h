@@ -1,5 +1,4 @@
 #pragma once
-#include <windows.h>
 #include <cstdint>
 #include <vector>
 
@@ -40,6 +39,7 @@ namespace Offsets
 	static constexpr uintptr_t XRayAddy2 = 0xF2813;
 
 
+	static constexpr uintptr_t cap = 0x23FE68;
 	static constexpr uintptr_t distanceFightingLevel = 0x23FE50;
 	static constexpr uintptr_t shieldingLevel = 0x23FE54;
 	static constexpr uintptr_t fistFightingLevel = 0x23FE40;
@@ -350,6 +350,16 @@ struct AlarmHp
 	}
 };
 
+struct DiscordHook
+{
+	char hook[150];
+
+
+	DiscordHook() : hook("0")
+	{
+	}
+};
+
 struct AlarmMp
 {
 	char spell[150];
@@ -586,6 +596,8 @@ public:
 	int32_t WALK = 250;
 
 	int32_t SHOOTABLE = 50;
+
+	int32_t DISCORD_PLAYER_INFO_DELAY = 3600000;
 };
 
 

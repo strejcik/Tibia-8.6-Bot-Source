@@ -1,4 +1,9 @@
 #pragma once
+#include <Windows.h>
+#include <string>
+
+
+
 
 
 #define AUTO_CONFIG_LOAD (97)
@@ -63,6 +68,7 @@
 #define CLB_LEVEL (159)
 #define CLB_AXE_FIGHTING_HIGHER_THAN (160)
 #define CLB_CLUB_FIGHTING_HIGHER_THAN (157)
+#define CLB_DISCORD (161)
 
 #define CLB_OPEN_HEALER_WINDOW (1000)
 #define CLB_OPEN_TIMERS_WINDOW (1001)
@@ -70,6 +76,7 @@
 #define CLB_OPEN_PVP_WINDOW (1003)
 #define CLB_OPEN_SHORTKEYS_WINDOW (1004)
 #define CLB_OPEN_ALARMS_WINDOW (1005)
+#define CLB_OPEN_DISCORD_WINDOW (1006)
 
 struct InputSpellLabel
 {
@@ -89,6 +96,11 @@ struct InputItemLabel
 struct InputTimerLabel
 {
 	HWND inputTime;
+};
+
+struct InputDiscordLabel
+{
+	HWND inputHook;
 };
 
 
@@ -128,6 +140,7 @@ namespace Menu
 	void RegisterDLLWindowUtilsClass();
 	void RegisterDLLWindowPvpClass();
 	void RegisterDLLWindowAlarmsClass();
+	void RegisterDLLWindowDiscordClass();
 	HMENU CreateDLLWindowMenu();
 	LRESULT CALLBACK MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	void CALLBACK MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime);
@@ -136,6 +149,7 @@ namespace Menu
 	void HandleMsgs();
 	void ToggleHealer();
 	void ToggleTimers();
+	void ToggleDiscord();
 	void ToggleSio();
 	void ToggleAdvertising();
 
@@ -169,6 +183,7 @@ namespace Menu
 	void CreateUtilsMenu(HWND hWindow);
 	void CreatePvpMenu(HWND hWindow);
 	void CreateAlarmsMenu(HWND hWindow);
+	void CreateDiscordMenu(HWND hWindow);
 	void ChangeCooldown(const InputTimerLabel& timerLabel, int32_t& cooldown);
 	void OpenFileExplorer(HWND hwnd);
 	void LoadConfig(LPWSTR filePath);
@@ -182,6 +197,7 @@ namespace Menu
 	LRESULT CALLBACK UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK PvpMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK AlarmsMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK DiscordMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 	static HWND lBoxAmulets;
 	static HWND lBoxRings;
@@ -197,6 +213,7 @@ namespace Menu
 	static HWND utilsHWND;
 	static HWND pvpHWND;
 	static HWND alarmsHWND;
+	static HWND discordHWND;
 	static MSG messages;
 	const HFONT hFont = CreateFontA(16,                        // nHeight
 		0,                         // nWidth
@@ -242,6 +259,7 @@ namespace Menu
 	static HWND buttonUtils;
 	static HWND buttonPvp;
 	static HWND buttonAlarms;
+	static HWND buttonDiscord;
 
 	static HWND cBoxHealFriendsSio;
 	static HWND cBoxHealFriendsUH;
@@ -290,6 +308,9 @@ namespace Menu
 	static InputTimerLabel inputTimerPush;
 	static InputTimerLabel inputTimerEquip;
 
+	//Discord input
+	static InputDiscordLabel inputDiscordHook;
+
 
 
 	static InputSpellLabel inputSioHp;
@@ -299,6 +320,8 @@ namespace Menu
 	static InputTimerLabel inputTimerAdvertising;
 	static InputTimerLabel inputTimerHoldTarget;
 	static InputTimerLabel inputTimerComboBot;
+	static InputTimerLabel inputTimerDiscord;
+
 	static InputSpellLabel inputHasteSpell;
 	static InputSpellLabel inputCureParalayseSpell;
 
@@ -333,6 +356,9 @@ namespace Menu
 	static AlarmLevel levelAlarm;
 
 
+	//Discord
+	static DiscordHook discordHook;
+
 
 
 
@@ -342,6 +368,7 @@ namespace Menu
 	static bool bUtilsWindowOpen = false;
 	static bool bPvpWindowOpen = false;
 	static bool bAlarmsWindowOpen = false;
+	static bool bDiscordWindowOpen = false;
 
 	static bool bAutoAttackState = false;
 	static bool bHealer = false;
@@ -371,6 +398,7 @@ namespace Menu
 	static bool bLoadedRings = false;
 	static bool bFreezeMagicWalls = false;
 	static bool bKillTarget = false;
+	static bool bDiscord = false;
 
 
 
@@ -392,6 +420,7 @@ namespace Menu
 
 	//Buttons
 	static HWND buttonCooldowns;
+
 
 
 	static HWND itemsToDeleteAmulets[3] = { NULL, NULL, NULL };
@@ -438,6 +467,7 @@ namespace Menu
 	static HWND cBoxEquipByHotkey;
 	static HWND cBoxEquipByMoveItem;
 	static HWND cBoxComboBot;
+	static HWND cBoxDiscord;
 
 
 
@@ -472,4 +502,7 @@ namespace Menu
 	static int32_t clockManaShield;
 	static int32_t clockKillTarget;
 	static int32_t clockPlayAlarm;
+
+	//Discord
+	static int32_t clockDiscordPlayerInfo;
 };

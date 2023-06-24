@@ -100,6 +100,120 @@
     <ClInclude Include="AutoAttack.h">
       <Filter>AutoAttack</Filter>
     </ClInclude>
+    <ClInclude Include="dpp\auditlog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\ban.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\cache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\channel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\cluster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\commandhandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\discordclient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\discordevents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\discordvoiceclient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\dispatcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\dpp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\dtemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\emoji.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\etf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\guild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\integration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\intents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\invite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\json_fwd.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\message.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\presence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\prune.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\queues.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\role.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\socket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\sslclient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\stage_instance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\stringops.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\sysdep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\user.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\voiceregion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\voicestate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\webhook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\win32_safe_warnings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dpp\wsclient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Tibia-Bot.rc" />

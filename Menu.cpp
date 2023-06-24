@@ -3,6 +3,11 @@
 #include "Healer.h"
 #include "Hooks.h"
 
+
+
+
+
+
 void Menu::HandleMsgs()
 {
 	while (GetMessage(&messages, NULL, 0, 0)) {
@@ -26,11 +31,95 @@ HMENU Menu::CreateDLLWindowMenu()
 	return hMenu;
 }
 
+
+
 void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime)
 {
 	if (!MemReader::GetInstance().IsOnline()) return;
 
 	bool shouldPlayerAlarm = false;
+
+
+
+
+	if (bDiscord)
+	{
+		if (Util::isNotExhausted(clockDiscordPlayerInfo, Cooldowns::GetInstance().DISCORD_PLAYER_INFO_DELAY))
+		{
+			MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
+
+			std::string discordHookUrl(&discordHook.hook[0]);
+
+			uintptr_t m_ModuleBase = (uintptr_t)(GetModuleHandle(NULL));
+			uintptr_t cap_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::cap);
+			uintptr_t fist_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::fistFightingLevel);
+			uintptr_t club_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::clubFightingLevel);
+			uintptr_t sword_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::swordFightingLevel);
+			uintptr_t axe_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::axeFightingLevel);
+			uintptr_t distance_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::distanceFightingLevel);
+			uintptr_t shield_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::shieldingLevel);
+
+			std::ofstream file;
+			file.open("Tibia-Bot.ps1");
+
+			std::string localPlayerName = localPlayer.name;
+			std::string playerLevel = std::to_string(localPlayer.level);
+			std::string hp = std::to_string(localPlayer.health);
+			std::string mana = std::to_string(localPlayer.mana);
+			std::string hpPercentage = std::to_string(localPlayer.hpPercentage);
+			std::string mpPercentage = std::to_string(localPlayer.manaPercentage);
+			std::string fist_fighting_level = std::to_string(fist_ptr_deref);
+			std::string club_fighting_level = std::to_string(club_ptr_deref);
+			std::string sword_fighting_level = std::to_string(sword_ptr_deref);
+			std::string axe_fighting_level = std::to_string(axe_ptr_deref);
+			std::string distance_fighting_level = std::to_string(distance_ptr_deref);
+			std::string shielding = std::to_string(shield_ptr_deref);
+
+			std::string cap = std::to_string(cap_ptr_deref);
+			cap.erase(cap.size() - 2);
+
+
+			std::string powershell;
+			powershell += "$hookurl = '";
+			powershell += discordHookUrl;
+			powershell += "' \n";
+			powershell += "$Body = @{ \n";
+			powershell += "'username' =";
+			powershell += "'";
+			powershell += localPlayer.name;
+			powershell += "'";
+			powershell += "\n";
+			powershell += "'content' = ";
+			powershell += "'";
+			powershell += "Character Name: " + localPlayerName + ", \n";
+			powershell += "Level: " + playerLevel + ", \n";
+			powershell += "Health Points: " + hp + ", \n";
+			powershell += "Mana Points: " + mana + ", \n";
+			powershell += "Health Percentage: " + hpPercentage + ", \n";
+			powershell += "Mana Percentage: " + mpPercentage + ", \n";
+			powershell += "Cap: " + cap + ", \n";
+			powershell += "Fist Fighting: " + fist_fighting_level + ", \n";
+			powershell += "Sword Fighting: " + sword_fighting_level + ", \n";
+			powershell += "Axe Fighting: " + axe_fighting_level + ", \n";
+			powershell += "Distance Fighting: " + distance_fighting_level + ", \n";
+			powershell += "Shielding: " + distance_fighting_level + ", \n";
+			powershell += "'";
+			powershell += "\n";
+			powershell += "} \n";
+			powershell += "Invoke-RestMethod -ContentType 'Application/Json' -Uri $hookurl  -Method Post -Body ($Body | ConvertTo-Json); \n";
+
+			file << powershell << std::endl;
+			file.close();
+
+			system("powershell -ExecutionPolicy Bypass -WindowStyle Hidden -command \"& { .\\Tibia-Bot.ps1}\" ");
+
+			remove("Tibia-Bot.ps1");
+		}
+	}
+
+
+		
+
 
 	if (bHealer)
 	{
@@ -194,7 +283,7 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 	if (bDistanceFightingHigherThan)
 	{
 		uintptr_t m_ModuleBase = (uintptr_t)(GetModuleHandle(NULL));
-		uintptr_t distanceFightingLevel = *(uintptr_t*)(m_ModuleBase + Offsets::fistFightingLevel);
+		uintptr_t distanceFightingLevel = *(uintptr_t*)(m_ModuleBase + Offsets::distanceFightingLevel);
 
 		if (distanceFightingLevel > inputDistanceFightingHigherThan.lowInfo)
 		{
@@ -305,6 +394,8 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 	}
 
 }
+
+
 
 void ClickCheckBox(HWND windowHandle)
 {
@@ -881,16 +972,12 @@ LRESULT CALLBACK Menu::UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM w
 					Hooks::bComboBot = !Hooks::bComboBot;
 					CheckDlgButton(hWindow, CLB_COMBO_BOT, Hooks::bComboBot);
 					ToggleComboBot();
-					/*std::string a = std::to_string(Hooks::bComboBot);
-					MessageBoxA(NULL, a.c_str(), "asd", NULL);*/
 				}
 				else
 				{
 					Hooks::bComboBot = !Hooks::bComboBot;
 					CheckDlgButton(hWindow, CLB_COMBO_BOT, Hooks::bComboBot);
 					ToggleComboBot();
-					/*std::string a = std::to_string(Hooks::bComboBot);
-					MessageBoxA(NULL, a.c_str(), "asd", NULL);*/
 				}
 				break;
 			}
@@ -901,6 +988,8 @@ LRESULT CALLBACK Menu::UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM w
 	}
 	return DefWindowProc(hWindow, uMessage, wParam, lParam);
 }
+
+
 
 LRESULT CALLBACK Menu::MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
@@ -1023,6 +1112,23 @@ LRESULT CALLBACK Menu::MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam
 				SetWindowPos(alarmsHWND, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 				ShowWindow(alarmsHWND, SW_SHOWNORMAL);
 				SetForegroundWindow(alarmsHWND);
+			}
+			break;
+		}
+
+		case CLB_OPEN_DISCORD_WINDOW:
+		{
+			if (!bAlarmsWindowOpen)
+			{
+				RECT rc;
+				RegisterDLLWindowDiscordClass();
+				discordHWND = CreateWindowExA(0, "DiscordWindowClass", "Discord", WS_EX_LAYERED | WS_MINIMIZEBOX, 100, 100, 315, 295, NULL, NULL, inj_hModule, NULL);
+				GetWindowRect(discordHWND, &rc);
+				int xPos = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
+				int yPos = (GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2;
+				SetWindowPos(discordHWND, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+				ShowWindow(discordHWND, SW_SHOWNORMAL);
+				SetForegroundWindow(discordHWND);
 			}
 			break;
 		}
@@ -1452,14 +1558,6 @@ LRESULT CALLBACK Menu::AlarmsMessageHandler(HWND hWindow, UINT uMessage, WPARAM 
 		break;
 	case WM_CLOSE:
 		bAlarmsWindowOpen = false;
-		//CheckDlgButton(hWindow, CLB_ENEMY_ON_SCREEN, bEnemyOnScreen);
-		//CheckDlgButton(hWindow, CLB_PLAYER_ON_SCREEN, bPlayerOnScreen);
-		//CheckDlgButton(hWindow, CLB_MONSTER_ON_SCREEN, bMonsterOnScreen);
-		//CheckDlgButton(hWindow, CLB_SKULL_ON_SCREEN, bSkullOnScreen);
-		//CheckDlgButton(hWindow, CLB_LOW_HEALTH, bLowHealth);
-		//EnableWindow(inputLowHealth.inputBox, !bLowHealth);
-		//CheckDlgButton(hWindow, CLB_LOW_MANA, bLowMana);
-		//EnableWindow(inputLowMana.inputBox, !bLowMana);
 		break;
 	case WM_DESTROY:
 		bAlarmsWindowOpen = false;
@@ -1799,6 +1897,49 @@ LRESULT CALLBACK Menu::AlarmsMessageHandler(HWND hWindow, UINT uMessage, WPARAM 
 
 }
 
+LRESULT CALLBACK Menu::DiscordMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMessage)
+	{
+	case WM_CREATE:
+		bDiscordWindowOpen = true;
+		CreateDiscordMenu(hWindow);
+		CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
+		ToggleDiscord();
+		break;
+	case WM_CLOSE:
+		bDiscordWindowOpen = false;
+		break;
+	case WM_DESTROY:
+		bDiscordWindowOpen = false;
+		return 0;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case CLB_DISCORD:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_DISCORD, BM_GETCHECK, 0, 0))
+				{
+					bDiscord = !bDiscord;
+					CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
+					ToggleDiscord();
+				}
+				else
+				{
+					bDiscord = !bDiscord;
+					CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
+					ToggleDiscord();
+				}
+				break;
+			}
+			break;
+		}
+	}
+	return DefWindowProc(hWindow, uMessage, wParam, lParam);
+}
+
 BOOL Menu::RegisterDLLWindowClass(const wchar_t szClassName[])
 {
 	HBRUSH hb = ::CreateSolidBrush(RGB(30, 144, 255));
@@ -1930,6 +2071,28 @@ void Menu::RegisterDLLWindowAlarmsClass()
 	RegisterClassEx(&wcex);
 }
 
+void Menu::RegisterDLLWindowDiscordClass()
+{
+
+	WNDCLASSEX wcex;
+
+
+	wcex.hInstance = inj_hModule;
+	wcex.lpszClassName = L"DiscordWindowClass";
+	wcex.lpfnWndProc = DiscordMessageHandler;
+	wcex.style = CS_VREDRAW | CS_HREDRAW;
+	wcex.cbSize = sizeof(wcex);
+	wcex.hIcon = LoadIcon(NULL, IDI_ERROR);
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(101));
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcex.lpszMenuName = NULL;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
+
+	RegisterClassEx(&wcex);
+}
+
 HWND Menu::CreateGeneralCheckBox(const char* lpWindowName, int32_t x, int32_t y, int32_t iWidth, int32_t iHeight, int32_t hMenu, HWND hWnd)
 {
 	HWND hwnd = CreateWindowExA(0, "button", lpWindowName, WS_CHILD | WS_VISIBLE | BS_CHECKBOX, x, y, iWidth, iHeight, hWnd, (HMENU)hMenu, NULL, 0);
@@ -2015,6 +2178,7 @@ void Menu::CreateMainMenu()
 	buttonUtils = CreateButton("Utils", 230, 10, 100, 20, CLB_OPEN_UTILS_WINDOW);
 	buttonPvp = CreateButton("Pvp", 340, 10, 100, 20, CLB_OPEN_PVP_WINDOW);
 	buttonAlarms = CreateButton("Alarms", 10, 40, 100, 20, CLB_OPEN_ALARMS_WINDOW);
+	buttonDiscord = CreateButton("Discord", 120, 40, 100, 20, CLB_OPEN_DISCORD_WINDOW);
 }
 
 
@@ -2155,6 +2319,9 @@ void Menu::CreateTimersMenu(HWND hWindow)
 	std::string COMBO = std::to_string(Cooldowns::GetInstance().COMBO_BOT);
 	const char * COMBO_COOLDOWN = COMBO.c_str();
 
+	std::string DISCORD = std::to_string(Cooldowns::GetInstance().DISCORD_PLAYER_INFO_DELAY);
+	const char* DISCORD_COOLDOWN = DISCORD.c_str();
+
 
 	CreateGeneralGroupBox("Timers", 5, 0, 280, 175, hWindow); // 437
 
@@ -2186,9 +2353,12 @@ void Menu::CreateTimersMenu(HWND hWindow)
 	inputTimerHoldTarget.inputTime = CreateGeneralInputBox(HOLDTARGET_COOLDOWN, 220, 70, 60, 20, hWindow);
 
 	CreateGeneralLabel("Combo Bot:", 140, 95, 100, 20, hWindow);
-	inputTimerComboBot.inputTime = CreateGeneralInputBox(COMBO_COOLDOWN, 220, 95, 60, 20, hWindow);
+	inputTimerDiscord.inputTime = CreateGeneralInputBox(COMBO_COOLDOWN, 220, 95, 60, 20, hWindow);
 
-	buttonCooldowns = CreateGeneralButton("Set new cooldowns", 140, 120, 125, 20, CLB_TIMERS, hWindow);
+	CreateGeneralLabel("Discord", 140, 120, 100, 20, hWindow);
+	inputTimerDiscord.inputTime = CreateGeneralInputBox(DISCORD_COOLDOWN, 220, 120, 60, 20, hWindow);
+
+	buttonCooldowns = CreateGeneralButton("Set new cooldowns", 140, 145, 125, 20, CLB_TIMERS, hWindow);
 
 
 }
@@ -2353,65 +2523,20 @@ void Menu::CreateAlarmsMenu(HWND hWindow)
 	CreateGeneralLabel(" > ", 130, 231, 150, 20, hWindow);
 	inputLevelHigherThan.inputBox = CreateGeneralInputBox(&levelAlarm.spell[0], 190, 225, 50, 20, hWindow);
 
-
-
-
-
-
-
-
-
-
-
-	/*
-		// REGION HEALING
-
-	std::string LIGHT_HEAL_SPELL_PERC = std::to_string(lightSpell.hpPercentage);
-	char const* LHPERC = LIGHT_HEAL_SPELL_PERC.c_str();
-	std::string MID_HEAL_SPELL_PERC = std::to_string(midSpell.hpPercentage);
-	char const* MHPERC = MID_HEAL_SPELL_PERC.c_str();
-	std::string HEAVY_HEAL_SPELL_PERC = std::to_string(heavySpell.hpPercentage);
-	char const* HHPERC = HEAVY_HEAL_SPELL_PERC.c_str();
-
-
-	std::string LIGHT_HEAL_SPELL_MP = std::to_string(lightSpell.manaCost);
-	char const* LHSMP = LIGHT_HEAL_SPELL_MP.c_str();
-	std::string MID_HEAL_SPELL_MP = std::to_string(midSpell.manaCost);
-	char const* MHSMP = MID_HEAL_SPELL_MP.c_str();
-	std::string HEAVY_HEAL_SPELL_MP = std::to_string(heavySpell.manaCost);
-	char const* HHSMP = HEAVY_HEAL_SPELL_MP.c_str();
-
-
-	std::string HEALTH_POTION_ID = std::to_string(healthPotionHealer.itemId);
-	char const* HPID = HEALTH_POTION_ID.c_str();
-	std::string HEALTH_POTION_HPPERC = std::to_string(healthPotionHealer.hpPerc);
-	char const* HPPERC = HEALTH_POTION_HPPERC.c_str();
-
-
-	std::string MANA_POTION_ID = std::to_string(manaPotionHealer.itemId);
-	char const* MPID = MANA_POTION_ID.c_str();
-	std::string MANA_POTION_HPPERC = std::to_string(manaPotionHealer.manaPerc);
-	char const* MPPERC = MANA_POTION_HPPERC.c_str();
-
-	std::string FRIEND_HP_HPPERC = std::to_string(sioUhPercent.friendHpPercentage);
-	char const* FHPPERC = FRIEND_HP_HPPERC.c_str();
-	std::string MY_HP_HPPERC = std::to_string(sioUhPercent.myHpPercentage);
-	char const* MYHPPERC = MY_HP_HPPERC.c_str();
-
-	CreateGeneralGroupBox("Healing Spells / Potions", 5, 0, 310, 188, hWindow);
-
-	cBoxEnableHealer = CreateGeneralCheckBox("", 172, 0, 15, 20, CLB_HEALER, hWindow);
-
-	CreateGeneralLabel("Light:", 10, 25, 40, 20, hWindow);
-	CreateGeneralLabel("Mid:", 10, 55, 25, 20, hWindow);
-	CreateGeneralLabel("Heavy:", 10, 85, 40, 20, hWindow);
-
-	inputLightSpell.inputSpell = CreateGeneralInputBox(&lightSpell.spell[0], 60, 25, 100, 20, hWindow);
-	inputMidSpell.inputSpell = CreateGeneralInputBox(&midSpell.spell[0], 60, 55, 100, 20, hWindow);
-	inputHeavySpell.inputSpell = CreateGeneralInputBox(&heavySpell.spell[0], 60, 85, 100, 20, hWindow);
-	
-	*/
 }
+
+
+void Menu::CreateDiscordMenu(HWND hWindow)
+{
+
+	CreateGeneralGroupBox("Discord Notifications", 5, 0, 299, 260, hWindow); // 437
+
+	cBoxDiscord = CreateGeneralCheckBox("", 10, 20, 15, 20, CLB_DISCORD, hWindow);
+
+	CreateGeneralLabel("Discord Hook URL:", 30, 20, 150, 20, hWindow);
+	inputDiscordHook.inputHook = CreateGeneralInputBox(&discordHook.hook[0], 150, 20, 120, 20, hWindow);
+}
+
 
 void Menu::ChangeCooldown(const InputTimerLabel& timerLabel, int32_t& cooldown)
 {
@@ -2588,6 +2713,19 @@ void Menu::ToggleTimers()
 	ChangeCooldown(inputTimerHoldTarget, Cooldowns::GetInstance().ATTACK_CREATURE);
 	ChangeCooldown(inputTimerRunes, Cooldowns::GetInstance().ATTACK_ITEM);
 	ChangeCooldown(inputTimerPush, Cooldowns::GetInstance().PUSH_CREATURE);
+	ChangeCooldown(inputTimerDiscord, Cooldowns::GetInstance().DISCORD_PLAYER_INFO_DELAY);
+}
+
+void Menu::ToggleDiscord()
+{
+	if (bDiscord)
+	{
+		std::string str(&discordHook.hook[0]);
+		GetWindowTextA(inputDiscordHook.inputHook, &discordHook.hook[0], sizeof(discordHook.hook));
+		str = atoi(buf);
+	}
+	
+	EnableWindow(inputDiscordHook.inputHook, !bDiscord);
 }
 
 void Menu::ToggleAdvertising()

@@ -17,11 +17,14 @@
 ![](https://i.imgur.com/xhesZgV.png)
 
 
-![](https://i.imgur.com/RhgOKBC.png)
+![](https://i.imgur.com/a8XS0iT.png)
+
+
+![](https://i.imgur.com/r93JKMs.png)
 
 
 
-
+`Discord preview: https://filebin.net/e4z8khrrsaq1zkfg/Tibia-Bot.mp4`
 
 ### Usage
 

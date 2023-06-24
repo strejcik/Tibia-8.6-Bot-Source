@@ -1,6 +1,5 @@
 #define PCH_H
 // add headers that you want to pre-compile here
-#include <Windows.h>
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
@@ -23,7 +22,6 @@
 #include <inttypes.h>
 
 
-
 #include "mem.h"
 #include "util.h"
 
@@ -34,6 +32,7 @@
 #include "AutoAttack.h"
 
 #pragma comment(lib, "winmm.lib")
+
 
 #pragma comment(linker,"/manifestdependency:\"type='win32' "\
                    "name='Microsoft.Windows.Common-Controls' "\
