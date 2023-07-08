@@ -2,6 +2,7 @@
 #include "Menu.h"
 #include "Healer.h"
 #include "Hooks.h"
+#include "MemReader.h"
 
 
 
@@ -32,32 +33,27 @@ HMENU Menu::CreateDLLWindowMenu()
 }
 
 
-
 void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime)
 {
 	if (!MemReader::GetInstance().IsOnline()) return;
 
 	bool shouldPlayerAlarm = false;
 
-
-
+	//light hack
+	if (bEnableLightHack)
+	{
+		MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
+		Entity* entity = MemReader::GetInstance().GetEntityInEntityList(localPlayer.id);
+		entity->light = 100;
+		entity->lightColor = 200;
+	}
 
 	if (bDiscord)
 	{
 		if (Util::isNotExhausted(clockDiscordPlayerInfo, Cooldowns::GetInstance().DISCORD_PLAYER_INFO_DELAY))
 		{
 			MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
-
-			std::string discordHookUrl(&discordHook.hook[0]);
-
-			uintptr_t m_ModuleBase = (uintptr_t)(GetModuleHandle(NULL));
-			uintptr_t cap_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::cap);
-			uintptr_t fist_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::fistFightingLevel);
-			uintptr_t club_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::clubFightingLevel);
-			uintptr_t sword_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::swordFightingLevel);
-			uintptr_t axe_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::axeFightingLevel);
-			uintptr_t distance_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::distanceFightingLevel);
-			uintptr_t shield_ptr_deref = *(uintptr_t*)(m_ModuleBase + Offsets::shieldingLevel);
+			MemReader::GetInstance().ReadSkills(&skills);
 
 			std::ofstream file;
 			file.open("Tibia-Bot.ps1");
@@ -68,52 +64,163 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 			std::string mana = std::to_string(localPlayer.mana);
 			std::string hpPercentage = std::to_string(localPlayer.hpPercentage);
 			std::string mpPercentage = std::to_string(localPlayer.manaPercentage);
-			std::string fist_fighting_level = std::to_string(fist_ptr_deref);
-			std::string club_fighting_level = std::to_string(club_ptr_deref);
-			std::string sword_fighting_level = std::to_string(sword_ptr_deref);
-			std::string axe_fighting_level = std::to_string(axe_ptr_deref);
-			std::string distance_fighting_level = std::to_string(distance_ptr_deref);
-			std::string shielding = std::to_string(shield_ptr_deref);
+			std::string fist_fighting_level = std::to_string(skills.FistFighting);
+			std::string club_fighting_level = std::to_string(skills.ClubFighting);
+			std::string sword_fighting_level = std::to_string(skills.SwordFighting);
+			std::string axe_fighting_level = std::to_string(skills.AxeFighting);
+			std::string distance_fighting_level = std::to_string(skills.DistanceFighting);
+			std::string shielding = std::to_string(skills.Shielding);
 
-			std::string cap = std::to_string(cap_ptr_deref);
+			std::string cap = std::to_string(skills.Cap);
 			cap.erase(cap.size() - 2);
 
+			char powershell[1024];
+			const char* powershell0 = "$hookurl = '";
+			const char* powershell1 = &discordHook.hook[0];
+			strcat_s(powershell, powershell0);
+			strcat_s(powershell, powershell1);
+			const char* powershell2 = "' \n";
+			const char* powershell3 = "$Body = @{ \n";
+			strcat_s(powershell, powershell2);
+			strcat_s(powershell, powershell3);
+			const char* powershell4 = "'username' =";
+			const char* powershell5 = "'";
+			strcat_s(powershell, powershell4);
+			strcat_s(powershell, powershell5);
+			const char* powershell6 = localPlayer.name;
+			const char* powershell7 = "'";
+			strcat_s(powershell, powershell6);
+			strcat_s(powershell, powershell7);
+			const char* powershell8 = "\n";
+			const char* powershell9 = "'content' = ";
+			strcat_s(powershell, powershell8);
+			strcat_s(powershell, powershell9);
+			const char* powershell10 = "'";
+			const char* powershell11 = "Character Name: ";
+			strcat_s(powershell, powershell10);
+			strcat_s(powershell, powershell11);
+			const char* powershell12 = localPlayer.name;
+			const char* powershell13 = ", \n";
+			strcat_s(powershell, powershell12);
+			strcat_s(powershell, powershell13);
 
-			std::string powershell;
-			powershell += "$hookurl = '";
-			powershell += discordHookUrl;
-			powershell += "' \n";
-			powershell += "$Body = @{ \n";
-			powershell += "'username' =";
-			powershell += "'";
-			powershell += localPlayer.name;
-			powershell += "'";
-			powershell += "\n";
-			powershell += "'content' = ";
-			powershell += "'";
-			powershell += "Character Name: " + localPlayerName + ", \n";
-			powershell += "Level: " + playerLevel + ", \n";
-			powershell += "Health Points: " + hp + ", \n";
-			powershell += "Mana Points: " + mana + ", \n";
-			powershell += "Health Percentage: " + hpPercentage + ", \n";
-			powershell += "Mana Percentage: " + mpPercentage + ", \n";
-			powershell += "Cap: " + cap + ", \n";
-			powershell += "Fist Fighting: " + fist_fighting_level + ", \n";
-			powershell += "Sword Fighting: " + sword_fighting_level + ", \n";
-			powershell += "Axe Fighting: " + axe_fighting_level + ", \n";
-			powershell += "Distance Fighting: " + distance_fighting_level + ", \n";
-			powershell += "Shielding: " + distance_fighting_level + ", \n";
-			powershell += "'";
-			powershell += "\n";
-			powershell += "} \n";
-			powershell += "Invoke-RestMethod -ContentType 'Application/Json' -Uri $hookurl  -Method Post -Body ($Body | ConvertTo-Json); \n";
 
+			const char* powershell14 = "Level: ";
+			const char* powershell15 = playerLevel.data();
+			strcat_s(powershell, powershell14);
+			strcat_s(powershell, powershell15);
+			const char* powershell16 = ", \n";
+			strcat_s(powershell, powershell16);
+
+
+			const char* powershell17 = "Health Points: ";
+			const char* powershell18 = hp.data();
+			strcat_s(powershell, powershell17);
+			strcat_s(powershell, powershell18);
+			const char* powershell19 = ", \n";
+			strcat_s(powershell, powershell19);
+
+			const char* powershell20 = "Mana Points: ";
+			const char* powershell21 = mana.data();
+			strcat_s(powershell, powershell20);
+			strcat_s(powershell, powershell21);
+			const char* powershell22 = ", \n";
+			strcat_s(powershell, powershell22);
+
+
+			const char* powershell23 = "Health Percentage: ";
+			const char* powershell24 = hpPercentage.data();
+			strcat_s(powershell, powershell23);
+			strcat_s(powershell, powershell24);
+			const char* powershell25 = ", \n";
+			strcat_s(powershell, powershell25);
+
+
+			const char* powershell26 = "Mana Percentage: ";
+			const char* powershell27 = mpPercentage.data();
+			strcat_s(powershell, powershell26);
+			strcat_s(powershell, powershell27);
+			const char* powershell28 = ", \n";
+			strcat_s(powershell, powershell28);
+
+
+			const char* powershell29 = "Cap: ";
+			const char* powershell30 = cap.data();
+			strcat_s(powershell, powershell29);
+			strcat_s(powershell, powershell30);
+			const char* powershell31 = ", \n";
+			strcat_s(powershell, powershell31);
+
+
+			const char* powershell32 = "Fist Fighting: ";
+			const char* powershell33 = fist_fighting_level.data();
+			strcat_s(powershell, powershell32);
+			strcat_s(powershell, powershell33);
+			const char* powershell34 = ", \n";
+			strcat_s(powershell, powershell34);
+
+
+			const char* powershell35 = "Sword Fighting: ";
+			const char* powershell36 = sword_fighting_level.data();
+			strcat_s(powershell, powershell35);
+			strcat_s(powershell, powershell36);
+			const char* powershell37 = ", \n";
+			strcat_s(powershell, powershell37);
+
+
+
+			const char* powershell38 = "Axe Fighting: ";
+			const char* powershell39 = axe_fighting_level.data();
+			strcat_s(powershell, powershell38);
+			strcat_s(powershell, powershell39);
+			const char* powershell40 = ", \n";
+			strcat_s(powershell, powershell40);
+
+
+
+			const char* powershell41 = "Distance Fighting: ";
+			const char* powershell42 = distance_fighting_level.data();
+			strcat_s(powershell, powershell41);
+			strcat_s(powershell, powershell42);
+			const char* powershell43 = ", \n";
+			strcat_s(powershell, powershell43);
+
+
+			const char* powershell44 = "Shielding: ";
+			const char* powershell45 = shielding.data();
+			strcat_s(powershell, powershell44);
+			strcat_s(powershell, powershell45);
+			const char* powershell46 = ", \n";
+			strcat_s(powershell, powershell46);
+
+
+			const char* powershell47 = "Club Fighting: ";
+			const char* powershell48 = club_fighting_level.data();
+			strcat_s(powershell, powershell47);
+			strcat_s(powershell, powershell48);
+			const char* powershell49 = ", \n";
+			strcat_s(powershell, powershell49);
+
+		
+
+
+
+			const char* powershell50 = "'";
+			const char* powershell51 = "\n";
+			strcat_s(powershell, powershell50);
+			strcat_s(powershell, powershell51);
+			const char* powershell52 = "} \n";
+			const char* powershell53 = "Invoke-RestMethod -ContentType 'Application/Json' -Uri $hookurl  -Method Post -Body ($Body | ConvertTo-Json); \n";
+			strcat_s(powershell, powershell52);
+			strcat_s(powershell, powershell53);
 			file << powershell << std::endl;
 			file.close();
-
 			system("powershell -ExecutionPolicy Bypass -WindowStyle Hidden -command \"& { .\\Tibia-Bot.ps1}\" ");
 
-			remove("Tibia-Bot.ps1");
+
+
+			file.close();
+		    remove("Tibia-Bot.ps1");
 		}
 	}
 
@@ -774,7 +881,7 @@ LRESULT CALLBACK Menu::UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM w
 		CheckDlgButton(hWindow, CLB_FOOD_EAT, bEatFood);
 		CheckDlgButton(hWindow, CLB_LOOK_IDS, Hooks::bLookIds);
 		CheckDlgButton(hWindow, CLB_HOLD_POSITION, bHoldPosition);
-		CheckDlgButton(hWindow, CLB_DISABLE_MOUNTS, bDisableMounts);
+		CheckDlgButton(hWindow, CLB_LIGHT_HACK, bEnableLightHack);
 		CheckDlgButton(hWindow, CLB_COMBO_BOT, Hooks::bComboBot);
 		ToggleComboBot();
 		break;
@@ -944,19 +1051,19 @@ LRESULT CALLBACK Menu::UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM w
 			}
 			//UpdateInfoConsole("Bot will keep the position you are currently on.");
 			break;
-		case CLB_DISABLE_MOUNTS:
+		case CLB_LIGHT_HACK:
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				if (SendDlgItemMessage(hWindow, CLB_DISABLE_MOUNTS, BM_GETCHECK, 0, 0))
+				if (SendDlgItemMessage(hWindow, CLB_LIGHT_HACK, BM_GETCHECK, 0, 0))
 				{
-					bDisableMounts = !bDisableMounts;
-					CheckDlgButton(hWindow, CLB_DISABLE_MOUNTS, bDisableMounts);
+					bEnableLightHack = !bEnableLightHack;
+					CheckDlgButton(hWindow, CLB_LIGHT_HACK, bEnableLightHack);
 				}
 				else
 				{
-					bDisableMounts = !bDisableMounts;
-					CheckDlgButton(hWindow, CLB_DISABLE_MOUNTS, bDisableMounts);
+					bEnableLightHack = !bEnableLightHack;
+					CheckDlgButton(hWindow, CLB_LIGHT_HACK, bEnableLightHack);
 				}
 				break;
 			}
@@ -2385,7 +2492,7 @@ void Menu::CreateUtilsMenu(HWND hWindow)
 
 	cBoxEnableHoldPosition = CreateGeneralCheckBox("Hold Position", 10, 165, 120, 20, CLB_HOLD_POSITION, hWindow);
 
-	cBoxEnableDisableMounts = CreateGeneralCheckBox("Disable Mounts", 10, 185, 140, 20, CLB_DISABLE_MOUNTS, hWindow);
+	cBoxEnableLightHack = CreateGeneralCheckBox("Light Hack", 10, 185, 140, 20, CLB_LIGHT_HACK, hWindow);
 
 	cBoxComboBot = CreateGeneralCheckBox("Combo Bot", 10, 205, 100, 20, CLB_COMBO_BOT, hWindow);
 

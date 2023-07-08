@@ -10,6 +10,8 @@ namespace Offsets
 	static constexpr uintptr_t mapStartAddy = 0x254118;
 	static constexpr uintptr_t offsetToAnotherTile = 0xA8;
 
+	static constexpr uintptr_t skills = 0x23FE40;
+
 	static constexpr uintptr_t entityListStartAddy = 0x23FEF8;
 	static constexpr uintptr_t offsetToAnotherEntity = 0xA8;
 
@@ -48,6 +50,7 @@ namespace Offsets
 	static constexpr uintptr_t axeFightingLevel = 0x23FE4C;
 	static constexpr uintptr_t clubFightingLevel = 0x23FE44;
 
+	static constexpr uintptr_t offsetGo = 0x23FF44;
 
 };
 
@@ -71,6 +74,19 @@ public:
 	int32_t zPos;
 };
 
+class Skills
+{
+public:
+	int32_t FistFighting; //0x0000
+	int32_t ClubFighting; //0x0004
+	int32_t SwordFighting; //0x0008
+	int32_t AxeFighting; //0x000C
+	int32_t DistanceFighting; //0x0010
+	int32_t Shielding; //0x0014
+	int32_t Fishing; //0x0018
+	char pad_001C[12]; //0x001C
+	int32_t Cap; //0x0028
+}; //Size: 0x002C
 
 enum Skulls : uint8_t
 {
@@ -228,7 +244,9 @@ public:
 	int32_t secondaryColor; //0x006C
 	int32_t detailColor; //0x0070
 	int32_t addon; //0x0074
-	char pad_0078[16]; //0x0078
+	int32_t light; //0x0078
+	int32_t lightColor; //0x007C
+	char pad_0078[8]; //0x0078
 	int32_t hpPercentage; //0x0088
 	char pad_008C[8]; //0x008C
 	int32_t skull; //0x0094

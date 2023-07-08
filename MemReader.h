@@ -14,6 +14,7 @@ private:
 
 public:
 	Self* m_LocalPlayer;
+	Skills* skills;
 	GetObjectProperty ItemFlagInfo;
 	int32_t m_SelfCellNr;
 	void ReadSelfMapCell();
@@ -24,6 +25,7 @@ public:
 	MemReader();
 
 	void ReadSelfCharacter(CSelfCharacter* character);
+	void ReadSkills(Skills* skills);
 	std::vector<Entity*> ReadVisibleCreatures();
 	std::vector<Entity*> ReadVisibleMonsters();
 	Item FindFoodInContainers();

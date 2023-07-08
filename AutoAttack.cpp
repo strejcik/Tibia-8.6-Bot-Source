@@ -150,7 +150,7 @@ void AutoAttack::Enable()
 	
 	bool isShootable = false;
 
-	if (ent.size() != 0)
+	if (ent.size() > 0)
 	{
 		Position myPosition = { selfCharacter.xPos, selfCharacter.yPos, selfCharacter.zPos };
 		Position toPosition = { ent[0]->xPos, ent[0]->yPos, ent[0]->zPos };

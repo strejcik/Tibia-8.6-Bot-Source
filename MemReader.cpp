@@ -6,6 +6,7 @@ MemReader::MemReader()
 {
 	m_ModuleBase = (uintptr_t)GetModuleHandle(NULL);
 	m_LocalPlayer = (Self*)(m_ModuleBase + Offsets::selfPlayer);
+	skills = (Skills*)(m_ModuleBase + Offsets::skills);
 	m_EquipmentSlots = (EquipmentSlots*)(m_ModuleBase + Offsets::equipmentStructAddy);
 	ItemFlagInfo = (GetObjectProperty)(m_ModuleBase + 0x100EC0); //0x100EC0
 	m_XrayAddy1 = (uintptr_t)(m_ModuleBase + Offsets::XRayAddy1);
@@ -47,6 +48,18 @@ void MemReader::ReadSelfCharacter(CSelfCharacter* character)
 		character->partyShield = selfEnt->partyShield;
 		character->guildShield = selfEnt->guildShield;
 	}
+}
+
+
+void MemReader::ReadSkills(Skills* skills)
+{
+	skills->AxeFighting = *(int*)(m_ModuleBase + Offsets::axeFightingLevel);
+	skills->Cap = *(int*)(m_ModuleBase + Offsets::cap);
+	skills->ClubFighting = *(int*)(m_ModuleBase + Offsets::clubFightingLevel);
+	skills->DistanceFighting = *(int*)(m_ModuleBase + Offsets::distanceFightingLevel);
+	skills->FistFighting = *(int*)(m_ModuleBase + Offsets::fistFightingLevel);
+	skills->Shielding = *(int*)(m_ModuleBase + Offsets::shieldingLevel);
+	skills->SwordFighting = *(int*)(m_ModuleBase + Offsets::swordFightingLevel);
 }
 
 EquipmentSlots* MemReader::GetItemOnEquipmentSlots()

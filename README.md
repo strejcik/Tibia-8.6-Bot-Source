@@ -8,7 +8,7 @@
 ![](https://i.imgur.com/Or0fEjV.png)
 
 
-![](https://i.imgur.com/Fl7R58l.png)
+![](https://i.imgur.com/JSY4qW4.png)
 
 
 ![](https://i.imgur.com/2zCuhcE.png)
@@ -24,7 +24,6 @@
 
 
 
-`Discord preview: https://filebin.net/e4z8khrrsaq1zkfg/Tibia-Bot.mp4`
 
 ### Usage
 

@@ -29,7 +29,7 @@
 #define CLB_MAGIC_SHIELD (119)
 #define CLB_HOLD_POSITION (120)
 #define CLB_RAINBOW (121)
-#define CLB_DISABLE_MOUNTS (122)
+#define CLB_LIGHT_HACK (122)
 #define CLB_DISABLE_FRAMES (123)
 #define CLB_AUTO_ATTACK (124)
 #define CLB_STAND_HASTE (125)
@@ -131,6 +131,7 @@ namespace Menu
 	static uintptr_t moduleBase = (uintptr_t)GetModuleHandle(NULL);
 	static CSelfCharacter selfPlayer;
 	static CSelfCharacter localPlayer;
+	static Skills skills;
 
 	static FILE* f;
 
@@ -389,7 +390,7 @@ namespace Menu
 	static bool bEquipModeHotkey = false;
 	static bool bEquipModeMoveItem = false;
 	static bool bMount = false;
-	static bool bDisableMounts = false;
+	static bool bEnableLightHack = false;
 	static bool bEatFood = false;
 	static bool bHoldPosition = false;
 	static bool bManaShield = false;
