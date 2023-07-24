@@ -109,7 +109,22 @@ void PacketSend::MoveItemFromContainerToPosition(int32_t itemId, int32_t fromSlo
 	PacketContainer(toXPos);
 	PacketContainer(toYPos);
 	PacketChannelId(toZPos);
-	PacketChannelId(19);
+	PacketChannelId(1);
+	PacketEnd(1);
+}
+
+void PacketSend::MoveItemFromContainerToLeftHand(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos, int32_t contNr)
+{
+	PacketStart(0x78);
+	PacketContainer(0xFFFF);
+	PacketContainer(0x40 + contNr);
+	PacketChannelId(fromSlotNumber);
+	PacketContainer(itemId);
+	PacketChannelId(fromSlotNumber);
+	PacketContainer(toXPos);
+	PacketContainer(toYPos);
+	PacketChannelId(toZPos);
+	PacketChannelId(1);
 	PacketEnd(1);
 }
 
@@ -117,12 +132,27 @@ void PacketSend::MoveItemFromPositionToContainer(int32_t itemId, int32_t fromSlo
 {
 	PacketStart(0x78);
 	PacketContainer(0xFFFF);
-	PacketContainer(0x2);
+	PacketContainer(6);
 	PacketChannelId(fromSlotNumber);
 	PacketContainer(itemId);
 	PacketChannelId(fromSlotNumber);
 	PacketContainer(toXPos);
-	PacketContainer(toYPos);
+	PacketContainer(0x40 + toYPos);
+	PacketChannelId(toZPos);
+	PacketChannelId(1);
+	PacketEnd(1);
+}
+
+void PacketSend::MoveItemFromAmuletPositionToContainer(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos)
+{
+	PacketStart(0x78);
+	PacketContainer(0xFFFF);
+	PacketContainer(2);
+	PacketChannelId(fromSlotNumber);
+	PacketContainer(itemId);
+	PacketChannelId(fromSlotNumber);
+	PacketContainer(toXPos);
+	PacketContainer(0x40 + toYPos);
 	PacketChannelId(toZPos);
 	PacketChannelId(1);
 	PacketEnd(1);

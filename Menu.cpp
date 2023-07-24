@@ -33,19 +33,31 @@ HMENU Menu::CreateDLLWindowMenu()
 }
 
 
+
 void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime)
 {
 	if (!MemReader::GetInstance().IsOnline()) return;
 
 	bool shouldPlayerAlarm = false;
 
+	if (bRuneMaker)
+	{
+		int32_t runeDelay = atoi(rmSpell.runeDelay);
+		if ((Util::isNotExhausted(Healer::GetInstance().m_TimerRuneMaker, runeDelay)))
+			Healer::GetInstance().RuneMaker(rmSpell);
+	}
+
 	//light hack
 	if (bEnableLightHack)
 	{
 		MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
 		Entity* entity = MemReader::GetInstance().GetEntityInEntityList(localPlayer.id);
-		entity->light = 100;
-		entity->lightColor = 200;
+		if (entity->light != 100 &&
+			entity->lightColor != 200)
+		{
+			entity->light = 100;
+			entity->lightColor = 200;
+		}
 	}
 
 	if (bDiscord)
@@ -223,8 +235,6 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 		    remove("Tibia-Bot.ps1");
 		}
 	}
-
-
 		
 
 
@@ -297,8 +307,6 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 	{
 		Item foodItem = MemReader::GetInstance().FindFoodInContainers();
 		
-		//BUG: if you remove 'std:: string a = ""; automatic eating won't work if you compile the project in Release mode'
-		std::string a = "";
 
 		if ((foodItem.id != 0) && (Util::isNotExhausted(clockEatFood, Cooldowns::GetInstance().EAT_FOOD)))
 		{
@@ -1225,7 +1233,7 @@ LRESULT CALLBACK Menu::MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam
 
 		case CLB_OPEN_DISCORD_WINDOW:
 		{
-			if (!bAlarmsWindowOpen)
+			if (!bDiscordWindowOpen)
 			{
 				RECT rc;
 				RegisterDLLWindowDiscordClass();
@@ -1236,6 +1244,23 @@ LRESULT CALLBACK Menu::MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam
 				SetWindowPos(discordHWND, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 				ShowWindow(discordHWND, SW_SHOWNORMAL);
 				SetForegroundWindow(discordHWND);
+			}
+			break;
+		}
+
+		case CLB_OPEN_RUNE_MAKER_WINDOW:
+		{
+			if (!bRuneMakerWindowOpen)
+			{
+				RECT rc;
+				RegisterDLLWindowRuneMakerClass();
+				runeMakerHWND = CreateWindowExA(0, "RuneMakerWindowClass", "Rune Maker", WS_EX_LAYERED | WS_MINIMIZEBOX, 100, 100, 315, 295, NULL, NULL, inj_hModule, NULL);
+				GetWindowRect(runeMakerHWND, &rc);
+				int xPos = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
+				int yPos = (GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2;
+				SetWindowPos(runeMakerHWND, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+				ShowWindow(runeMakerHWND, SW_SHOWNORMAL);
+				SetForegroundWindow(runeMakerHWND);
 			}
 			break;
 		}
@@ -2047,6 +2072,62 @@ LRESULT CALLBACK Menu::DiscordMessageHandler(HWND hWindow, UINT uMessage, WPARAM
 	return DefWindowProc(hWindow, uMessage, wParam, lParam);
 }
 
+LRESULT CALLBACK Menu::RuneMakerMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMessage)
+	{
+	case WM_CREATE:
+		bRuneMakerWindowOpen = true;
+		/*bDiscordWindowOpen = true;
+		CreateDiscordMenu(hWindow);
+		CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
+		ToggleDiscord();*/
+		CreateRuneMakerMenu(hWindow);
+		CheckDlgButton(hWindow, CLB_RUNE_MAKER, bRuneMaker);
+		ToggleRuneMaker();
+
+		break;
+	case WM_CLOSE:
+		bRuneMakerWindowOpen = false;
+		break;
+	case WM_DESTROY:
+		bRuneMakerWindowOpen = false;
+		return 0;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case CLB_RUNE_MAKER:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_RUNE_MAKER, BM_GETCHECK, 0, 0))
+				{
+					/*bDiscord = !bDiscord;
+					CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
+					ToggleDiscord();*/
+
+					bRuneMaker = !bRuneMaker;
+					CheckDlgButton(hWindow, CLB_RUNE_MAKER, bRuneMaker);
+					ToggleRuneMaker();
+					//toggle
+				}
+				else
+				{
+					/*bDiscord = !bDiscord;
+					CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
+					ToggleDiscord();*/
+					bRuneMaker = !bRuneMaker;
+					CheckDlgButton(hWindow, CLB_RUNE_MAKER, bRuneMaker);
+					ToggleRuneMaker();
+				}
+				break;
+			}
+			break;
+		}
+	}
+	return DefWindowProc(hWindow, uMessage, wParam, lParam);
+}
+
 BOOL Menu::RegisterDLLWindowClass(const wchar_t szClassName[])
 {
 	HBRUSH hb = ::CreateSolidBrush(RGB(30, 144, 255));
@@ -2200,6 +2281,27 @@ void Menu::RegisterDLLWindowDiscordClass()
 	RegisterClassEx(&wcex);
 }
 
+void Menu::RegisterDLLWindowRuneMakerClass()
+{
+	WNDCLASSEX wcex;
+
+
+	wcex.hInstance = inj_hModule;
+	wcex.lpszClassName = L"RuneMakerWindowClass";
+	wcex.lpfnWndProc = RuneMakerMessageHandler;
+	wcex.style = CS_VREDRAW | CS_HREDRAW;
+	wcex.cbSize = sizeof(wcex);
+	wcex.hIcon = LoadIcon(NULL, IDI_ERROR);
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(101));
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcex.lpszMenuName = NULL;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
+
+	RegisterClassEx(&wcex);
+}
+
 HWND Menu::CreateGeneralCheckBox(const char* lpWindowName, int32_t x, int32_t y, int32_t iWidth, int32_t iHeight, int32_t hMenu, HWND hWnd)
 {
 	HWND hwnd = CreateWindowExA(0, "button", lpWindowName, WS_CHILD | WS_VISIBLE | BS_CHECKBOX, x, y, iWidth, iHeight, hWnd, (HMENU)hMenu, NULL, 0);
@@ -2286,6 +2388,7 @@ void Menu::CreateMainMenu()
 	buttonPvp = CreateButton("Pvp", 340, 10, 100, 20, CLB_OPEN_PVP_WINDOW);
 	buttonAlarms = CreateButton("Alarms", 10, 40, 100, 20, CLB_OPEN_ALARMS_WINDOW);
 	buttonDiscord = CreateButton("Discord", 120, 40, 100, 20, CLB_OPEN_DISCORD_WINDOW);
+	buttonRuneMaker = CreateButton("Rune Maker", 230, 40, 100, 20, CLB_OPEN_RUNE_MAKER_WINDOW);
 }
 
 
@@ -2644,6 +2747,34 @@ void Menu::CreateDiscordMenu(HWND hWindow)
 	inputDiscordHook.inputHook = CreateGeneralInputBox(&discordHook.hook[0], 150, 20, 120, 20, hWindow);
 }
 
+void Menu::CreateRuneMakerMenu(HWND hWindow)
+{
+	CreateGeneralGroupBox("Rune Maker", 5, 0, 299, 260, hWindow); // 437
+	cBoxRuneMaker = CreateGeneralCheckBox("", 95, 0, 15, 20, CLB_RUNE_MAKER, hWindow);
+	
+
+
+
+	CreateGeneralLabel("Spell", 15, 25, 140, 20, hWindow);
+	inputRMSpell.inputBox = CreateGeneralInputBox(&rmSpell.spell[0], 60, 25, 150, 20, hWindow);
+
+	CreateGeneralLabel("Spell Mana", 15, 45, 140, 20, hWindow);
+	inputRMSpellMana.inputBox = CreateGeneralInputBox(&rmSpell.mana[0], 100, 45, 50, 20, hWindow);
+
+	CreateGeneralLabel("Spell Soul", 15, 65, 140, 20, hWindow);
+	inputRMSpellSoul.inputBox = CreateGeneralInputBox(&rmSpell.soul[0], 100, 65, 50, 20, hWindow);
+
+	CreateGeneralLabel("Rune Delay", 15, 85, 140, 20, hWindow);
+	inputRMRuneDelay.inputBox = CreateGeneralInputBox(&rmSpell.runeDelay[0], 100, 85, 50, 20, hWindow);
+
+	CreateGeneralLabel("Rune Id", 15, 105, 140, 20, hWindow);
+	inputRMRuneId.inputBox = CreateGeneralInputBox(&rmSpell.runeId[0], 100, 105, 50, 20, hWindow);
+
+	/*CreateGeneralLabel("Custom Spell", 130, 209, 150, 20, hWindow);
+	inputSwordFightingHigherThan.inputBox = CreateGeneralInputBox(&swordFightingAlarm.spell[0], 190, 205, 50, 20, hWindow);
+	inputLevelHigherThan.inputBox = CreateGeneralInputBox(&levelAlarm.spell[0], 190, 225, 50, 20, hWindow);*/
+}
+
 
 void Menu::ChangeCooldown(const InputTimerLabel& timerLabel, int32_t& cooldown)
 {
@@ -2834,6 +2965,8 @@ void Menu::ToggleDiscord()
 	
 	EnableWindow(inputDiscordHook.inputHook, !bDiscord);
 }
+
+
 
 void Menu::ToggleAdvertising()
 {
@@ -3056,6 +3189,40 @@ void Menu::ToggleLevelAlarm()
 	}
 
 	EnableWindow(inputLevelHigherThan.inputBox, !bLevelHigherThan);
+}
+
+void Menu::ToggleRuneMaker()
+{
+	if (bRuneMaker)
+	{
+		rmSpell.spellLenght = GetWindowTextA(inputRMSpell.inputBox, &rmSpell.spell[0], sizeof(rmSpell.spell));
+		if (rmSpell.spellLenght)
+		{
+			GetWindowTextA(inputRMSpell.inputBox, &buf[0], sizeof(buf));
+			strcpy_s(rmSpell.spell, buf);
+			GetWindowTextA(inputRMSpellMana.inputBox, &buf[0], sizeof(buf));
+			strcpy_s(rmSpell.mana, buf);
+			GetWindowTextA(inputRMSpellSoul.inputBox, &buf[0], sizeof(buf));
+			strcpy_s(rmSpell.soul, buf);
+			GetWindowTextA(inputRMRuneDelay.inputBox, &buf[0], sizeof(buf));
+			strcpy_s(rmSpell.runeDelay, buf);
+			GetWindowTextA(inputRMRuneId.inputBox, &buf[0], sizeof(buf));
+			strcpy_s(rmSpell.runeId, buf);
+		}
+		else
+		{
+			strcpy_s(rmSpell.spell, 0);
+			strcpy_s(rmSpell.mana, 0);
+			strcpy_s(rmSpell.soul, 0);
+			strcpy_s(rmSpell.runeDelay, 0);
+			strcpy_s(rmSpell.runeId, 0);
+		}
+	}
+	EnableWindow(inputRMSpell.inputBox, !bRuneMaker);
+	EnableWindow(inputRMSpellMana.inputBox, !bRuneMaker);
+	EnableWindow(inputRMSpellSoul.inputBox, !bRuneMaker);
+	EnableWindow(inputRMRuneDelay.inputBox, !bRuneMaker);
+	EnableWindow(inputRMRuneId.inputBox, !bRuneMaker);
 }
 
 

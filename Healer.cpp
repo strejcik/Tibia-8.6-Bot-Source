@@ -9,6 +9,9 @@ Healer::Healer()
 	int32_t m_TimerAutoHaste = 0;
 	int32_t m_TimerAntiParal = 0;
 	int32_t m_TimerEquipItem = 0;
+	int32_t m_TimerEquipRune = 0;
+	int32_t m_TimerRuneMaker = 0;
+	int32_t itemContNr = 0;
 }
 
 void Healer::HealWithSpells(const LightSpell& lightSpell, const MidSpell& midSpell, const HeavySpell& heavySpell)
@@ -146,17 +149,18 @@ void Healer::EquipAmuletBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem,
 	CSelfCharacter selfCharacter;
 	MemReader::GetInstance().ReadSelfCharacter(&selfCharacter);
 	int32_t currentItemOnSlot = MemReader::GetInstance().GetItemOnEquipmentSlots()->amuletId;
+	Item item = MemReader::GetInstance().ReadContainersForItem2(toEquipIfLow.Id);
 
 	if ((toEquipIfLow.Id) && (currentItemOnSlot != toEquipIfLow.Id) && ((selfCharacter.hpPercentage <= toEquipIfLow.hpPercentage) && !MemReader::GetInstance().IsFlagTrue(CHARACTER_FLAGS::MANA_SHIELD)))
 	{
 		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipItem, Cooldowns::GetInstance().EQUIP_ITEM)))
 		{
-			Item item = MemReader::GetInstance().ReadContainersForItem2(toEquipIfLow.Id);
-			//BUG: if you remove 'std:: string a = ""; auto equip won't work if you compile the project in Release mode'
-			std::string a = "";
 			if (item.id)
 			{
 				PacketSend::GetInstance().MoveItemFromContainerToPosition(item.id, item.slotNumber, 0xFFFF, EquipmentItems::Amulet, 0, item.contNr);
+				itemContNr = item.contNr;
+
+				
 			}
 
 
@@ -167,10 +171,10 @@ void Healer::EquipAmuletBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem,
 
 		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipItem, Cooldowns::GetInstance().BETWEEN_PACKETS)))
 		{
-			Item item = MemReader::GetInstance().ReadContainersForItem2(toEquipIfLow.Id);
 			if (item.id)
 			{
 				PacketSend::GetInstance().MoveItemFromContainerToPosition(item.id, item.slotNumber, 0xFFFF, EquipmentItems::Amulet, 0, item.contNr);
+				itemContNr = item.contNr;
 			}
 		}
 	}
@@ -178,7 +182,56 @@ void Healer::EquipAmuletBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem,
 	{
 		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipItem, Cooldowns::GetInstance().BETWEEN_PACKETS)))
 		{
-			PacketSend::GetInstance().MoveItemFromPositionToContainer(toDequipWhenSafe.Id, 0, 0xFFFF, 0x40, 0);
+			if (itemContNr != 0)
+			{
+				PacketSend::GetInstance().MoveItemFromAmuletPositionToContainer(toDequipWhenSafe.Id, 0, 0xFFFF, itemContNr, 0);
+			}
+			else
+			{
+				PacketSend::GetInstance().MoveItemFromAmuletPositionToContainer(toDequipWhenSafe.Id, 0, 0xFFFF, item.contNr, 0);
+			}
 		}
 	}
 }
+
+
+
+void Healer::RuneMaker(const RuneMakerSpell& rmSpell)
+{
+	CSelfCharacter selfCharacter;
+	MemReader::GetInstance().ReadSelfCharacter(&selfCharacter);
+	int32_t currentItemOnSlot = MemReader::GetInstance().GetItemOnEquipmentSlots()->leftHandId;
+	Item item = MemReader::GetInstance().ReadContainersForItem2(3147);
+	int32_t mySoul = *(int*)(m_ModuleBase + Offsets::soul);
+
+	int32_t spellSoul = atoi(rmSpell.soul);
+	int32_t spellMana = atoi(rmSpell.mana);
+	int32_t runeId = atoi(rmSpell.runeId);
+
+
+	
+
+	if (spellSoul <= mySoul && spellMana < selfCharacter.mana && rmSpell.spellLenght != 0)
+	{
+		if (currentItemOnSlot != 3147 && item.id !=0)
+		{
+
+			if ((Util::isNotExhausted(m_TimerEquipRune, Cooldowns::GetInstance().BETWEEN_PACKETS)))
+			{
+				PacketSend::GetInstance().MoveItemFromContainerToLeftHand(item.id, item.slotNumber, 0xFFFF, EquipmentItems::Left_hand, 0, item.contNr);
+			}
+		}
+		else if (Util::isNotExhausted(m_TimerEquipRune, Cooldowns::GetInstance().BETWEEN_PACKETS))
+		{
+			PacketSend::GetInstance().Say(rmSpell.spell);
+			currentItemOnSlot = MemReader::GetInstance().GetItemOnEquipmentSlots()->leftHandId;
+			item = MemReader::GetInstance().ReadContainersForItem2(runeId);
+		}
+		
+		else if ((Util::isNotExhausted(m_TimerEquipRune, Cooldowns::GetInstance().BETWEEN_PACKETS)) && currentItemOnSlot == runeId && item.id != 0)
+		{
+			PacketSend::GetInstance().MoveItemFromPositionToContainer(runeId, 0, 0xFFFF, item.contNr, 0);
+		}
+	}
+}
+//3172

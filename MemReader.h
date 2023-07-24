@@ -30,6 +30,7 @@ public:
 	std::vector<Entity*> ReadVisibleMonsters();
 	Item FindFoodInContainers();
 	Item ReadContainersForItem2(int32_t itemId);
+	std::vector<int32_t> GetContainersIndex(uintptr_t node, std::vector<uintptr_t> pointers);
 	std::vector<ContainerStruct*> GetContainers(uintptr_t node, std::vector<uintptr_t> pointers);
 
 	//std::vector<SContainerStruct> GetContainers(uintptr_t node, std::vector<uintptr_t> pointers);

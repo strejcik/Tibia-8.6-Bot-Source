@@ -49,6 +49,7 @@ namespace Offsets
 	static constexpr uintptr_t level = 0x23FE88;
 	static constexpr uintptr_t axeFightingLevel = 0x23FE4C;
 	static constexpr uintptr_t clubFightingLevel = 0x23FE44;
+	static constexpr uintptr_t soul = 0x23FE70;
 
 	static constexpr uintptr_t offsetGo = 0x23FF44;
 
@@ -378,6 +379,20 @@ struct DiscordHook
 	}
 };
 
+struct RuneMakerSpell
+{
+	char spell[150];
+	int32_t spellLenght = 0;
+	char mana[150];
+	char soul[150];
+	char runeDelay[150];
+	char runeId[150];
+
+	RuneMakerSpell() : spell("adito grav"), mana("120"), soul("2"), runeDelay("2000"), runeId("3148")
+	{
+	}
+};
+
 struct AlarmMp
 {
 	char spell[150];
@@ -591,10 +606,15 @@ public:
 	int32_t ATTACK_SPELL = 2000; // original: 200
 	int32_t HEAL_SPELL = 1000; //original: HEALSPELL = 100
 
+	int32_t RUNE_SPELL = 2000;
+
+	int32_t RUNE_MAKER = 2000;
+	
 	int32_t HEAL_ITEM = 500;
 	int32_t ATTACK_ITEM = 500;
 	int32_t DROP_ITEM = 250;
 	int32_t EQUIP_ITEM = 250;
+	int32_t DEQUIP_ITEM = 1000;
 
 	int32_t SAY_ADVERTISING = 60500;
 	int32_t COMBO_BOT = 200;

@@ -69,6 +69,7 @@
 #define CLB_AXE_FIGHTING_HIGHER_THAN (160)
 #define CLB_CLUB_FIGHTING_HIGHER_THAN (157)
 #define CLB_DISCORD (161)
+#define CLB_RUNE_MAKER (162)
 
 #define CLB_OPEN_HEALER_WINDOW (1000)
 #define CLB_OPEN_TIMERS_WINDOW (1001)
@@ -77,6 +78,7 @@
 #define CLB_OPEN_SHORTKEYS_WINDOW (1004)
 #define CLB_OPEN_ALARMS_WINDOW (1005)
 #define CLB_OPEN_DISCORD_WINDOW (1006)
+#define CLB_OPEN_RUNE_MAKER_WINDOW (1007)
 
 struct InputSpellLabel
 {
@@ -101,6 +103,11 @@ struct InputTimerLabel
 struct InputDiscordLabel
 {
 	HWND inputHook;
+};
+
+struct InputRuneMakerLabel
+{
+	HWND inputBox;
 };
 
 
@@ -142,6 +149,7 @@ namespace Menu
 	void RegisterDLLWindowPvpClass();
 	void RegisterDLLWindowAlarmsClass();
 	void RegisterDLLWindowDiscordClass();
+	void RegisterDLLWindowRuneMakerClass();
 	HMENU CreateDLLWindowMenu();
 	LRESULT CALLBACK MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	void CALLBACK MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime);
@@ -166,6 +174,7 @@ namespace Menu
 	void ToggleShieldingAlarm();
 	void ToggleSwordFightingAlarm();
 	void ToggleLevelAlarm();
+	void ToggleRuneMaker();
 
 	HWND CreateButton(const char* lpWindowName, int32_t x, int32_t y, int32_t iWidth, int32_t iHeight, int32_t hMenu);
 
@@ -185,6 +194,7 @@ namespace Menu
 	void CreatePvpMenu(HWND hWindow);
 	void CreateAlarmsMenu(HWND hWindow);
 	void CreateDiscordMenu(HWND hWindow);
+	void CreateRuneMakerMenu(HWND hWindow);
 	void ChangeCooldown(const InputTimerLabel& timerLabel, int32_t& cooldown);
 	void OpenFileExplorer(HWND hwnd);
 	void LoadConfig(LPWSTR filePath);
@@ -199,7 +209,7 @@ namespace Menu
 	LRESULT CALLBACK PvpMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK AlarmsMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK DiscordMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
-
+	LRESULT CALLBACK RuneMakerMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	static HWND lBoxAmulets;
 	static HWND lBoxRings;
 
@@ -215,6 +225,7 @@ namespace Menu
 	static HWND pvpHWND;
 	static HWND alarmsHWND;
 	static HWND discordHWND;
+	static HWND runeMakerHWND;
 	static MSG messages;
 	const HFONT hFont = CreateFontA(16,                        // nHeight
 		0,                         // nWidth
@@ -261,6 +272,7 @@ namespace Menu
 	static HWND buttonPvp;
 	static HWND buttonAlarms;
 	static HWND buttonDiscord;
+	static HWND buttonRuneMaker;
 
 	static HWND cBoxHealFriendsSio;
 	static HWND cBoxHealFriendsUH;
@@ -313,6 +325,16 @@ namespace Menu
 	static InputDiscordLabel inputDiscordHook;
 
 
+	//RuneMaker input
+	static InputRuneMakerLabel inputRMSpell;
+	static InputRuneMakerLabel inputRMSpellMana;
+	static InputRuneMakerLabel inputRMSpellSoul;
+	static InputRuneMakerLabel inputRMRuneDelay;
+	static InputRuneMakerLabel inputRMRuneId;
+
+	static InputRuneMakerLabel inputRMCustomSpell;
+	static InputRuneMakerLabel inputRMCustomSpellMana;
+
 
 	static InputSpellLabel inputSioHp;
 	static InputSpellLabel inputSioMyHp;
@@ -360,6 +382,10 @@ namespace Menu
 	//Discord
 	static DiscordHook discordHook;
 
+	//RuneMaker
+
+	static RuneMakerSpell rmSpell;
+
 
 
 
@@ -370,6 +396,7 @@ namespace Menu
 	static bool bPvpWindowOpen = false;
 	static bool bAlarmsWindowOpen = false;
 	static bool bDiscordWindowOpen = false;
+	static bool bRuneMakerWindowOpen = false;
 
 	static bool bAutoAttackState = false;
 	static bool bHealer = false;
@@ -400,6 +427,7 @@ namespace Menu
 	static bool bFreezeMagicWalls = false;
 	static bool bKillTarget = false;
 	static bool bDiscord = false;
+	static bool bRuneMaker = false;
 
 
 
@@ -469,6 +497,7 @@ namespace Menu
 	static HWND cBoxEquipByMoveItem;
 	static HWND cBoxComboBot;
 	static HWND cBoxDiscord;
+	static HWND cBoxRuneMaker;
 
 
 
@@ -486,6 +515,8 @@ namespace Menu
 	static HWND cBoxLevel;
 	static HWND cBoxAxeFighting;
 	static HWND cBoxClubFighting;
+
+
 
 
 	// Say On Advertisting //
@@ -506,4 +537,7 @@ namespace Menu
 
 	//Discord
 	static int32_t clockDiscordPlayerInfo;
+
+	//RuneMaker
+	static int32_t clockRuneMaker;
 };

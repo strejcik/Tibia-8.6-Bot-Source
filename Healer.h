@@ -12,6 +12,9 @@ public:
 	int32_t m_TimerAutoHaste = 0;
 	int32_t m_TimerAntiParal = 0;
 	int32_t m_TimerEquipItem = 0;
+	int32_t m_TimerEquipRune = 0;
+	int32_t itemContNr = 0;
+	int32_t m_TimerRuneMaker = 0;
 
 	void HealWithSpells(const LightSpell& lightSpell, const MidSpell& midSpell, const HeavySpell& heavySpell);
 	void HealWithItems(const HealthPotionItemHealer& healthPotion, const ManaPotionItemHealer& manaPotion);
@@ -20,4 +23,8 @@ public:
 	void CureParalyze(const CureParalayseSpell& paralSpell);
 
 	void EquipAmuletBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem, const ExItem& toEquipIfLow, const ExItem& toSwitchWhenSafe, const ExItem& toDequipWhenSafe);
+
+	void RuneMaker(const RuneMakerSpell& rmSpell);
+
+	//void HealWithSpells(const LightSpell& lightSpell, const MidSpell& midSpell, const HeavySpell& heavySpell);
 };

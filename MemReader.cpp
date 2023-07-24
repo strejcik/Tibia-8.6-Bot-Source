@@ -11,6 +11,7 @@ MemReader::MemReader()
 	ItemFlagInfo = (GetObjectProperty)(m_ModuleBase + 0x100EC0); //0x100EC0
 	m_XrayAddy1 = (uintptr_t)(m_ModuleBase + Offsets::XRayAddy1);
 	m_XrayAddy2 = (uintptr_t)(m_ModuleBase + Offsets::XRayAddy2);
+	m_SelfCellNr = 0;
 }
 
 void MemReader::ReadSelfCharacter(CSelfCharacter* character)
@@ -357,8 +358,7 @@ std::vector<ContainerStruct*> MemReader::GetContainers(uintptr_t node, std::vect
 	for (uint32_t i = 0; i < 16; i += 1)
 	{
 		ContainerStruct* container = (ContainerStruct*)(mem::FindDMAAddy2(node+(0x1EC*i), {}));
-		std::string b = std::to_string(i);
-		strcpy_s(container->name, b.c_str());
+
 		if (!container) continue;
 		if ((container->itemsCount <= 0)) continue;
 		if (container->isOpened == 0) continue;
@@ -366,6 +366,23 @@ std::vector<ContainerStruct*> MemReader::GetContainers(uintptr_t node, std::vect
 		containers.push_back(container);
 	}
 	return containers;
+}
+
+std::vector<int32_t> MemReader::GetContainersIndex(uintptr_t node, std::vector<uintptr_t> pointers)
+{
+	std::vector<ContainerStruct*> containers;
+	std::vector<int32_t> indexes;
+	for (uint32_t i = 0; i < 16; i += 1)
+	{
+		ContainerStruct* container = (ContainerStruct*)(mem::FindDMAAddy2(node + (0x1EC * i), {}));
+
+		if (!container) continue;
+		if ((container->itemsCount <= 0)) continue;
+		if (container->isOpened == 0) continue;
+
+		indexes.push_back(i);
+	}
+	return indexes;
 }
 
 //std::vector<SContainerStruct> MemReader::GetContainers(uintptr_t node, std::vector<uintptr_t> pointers)
@@ -407,52 +424,59 @@ uintptr_t MemReader::GetContainerListStartAddress()
 Item MemReader::FindFoodInContainers()
 {
 	std::vector<ContainerStruct*> containers = GetContainers(GetContainerListStartAddress(), {});
+	std::vector<int32_t> indexes = GetContainersIndex(GetContainerListStartAddress(), {});
 	std::array<int32_t, 83> m_FoodItems = { 17457, 17821, 17820, 14085, 8020, 3587, 6574, 8017, 3588, 3600, 3602, 3725, 8197, 6277, 6569, 3599, 3595, 3607, 3590, 8019, 3589,
 		6543, 6544, 6545, 6542, 6541, 3598, 3597, 904, 8014, 3728, 6278, 3583, 3606, 3731, 3578, 6500, 3592, 3732, 7159, 3582, 12310, 7375, 7372, 7373, 8013, 6276,
 		8018, 3604, 5096, 901, 3577, 3593, 3580, 8015, 3586, 3726, 841, 3584, 8011, 8010, 3594, 7158, 8012, 3585, 3724, 10329, 3601, 3579, 3581, 3730, 3729, 3591,
 		3596, 5678, 6125, 6392, 836, 3723, 8177, 21143, 21146, 21144 };
 
-	int32_t i = 0;
-	for (ContainerStruct*& container : containers)
+
+	for (std::vector<int32_t>::size_type i = 0; i != indexes.size(); i++)
 	{
 
-		if (container->isOpened == 0) continue;
-		//contNr (0), I open my backpack first so it's number is 0, and we want to loot everything that's not in main backpack into it
-		if ((container->itemsCount <= 0)) continue;
-		std::vector<Item> itemsInContainer = container->getAllItemsInContainer(container->itemsCount, i);
+		std::vector<Item> itemsInContainer = containers[i]->getAllItemsInContainer(containers[i]->itemsCount, indexes[i]);
+
 		for (Item item : itemsInContainer)
 		{
+
 			for (int32_t foodItem : m_FoodItems)
 			{
 				if (item.id == foodItem)
 				{
-					return item;
+					return Item{ item.contNr, item.count, item.id, item.slotNumber };
 				}
 			}
+
+
 		}
-		i++;
 	}
+
+
+
+
 	return Item{ 0,0,0,0 };
 }
 
 Item MemReader::ReadContainersForItem2(int32_t itemId)
 {
 	std::vector<ContainerStruct*> containers = GetContainers(GetContainerListStartAddress(), {});
-	int32_t i = 0;
-	for (ContainerStruct*& container : containers)
+	std::vector<int32_t> indexes = GetContainersIndex(GetContainerListStartAddress(), {});
+
+	for (std::vector<int32_t>::size_type i = 0; i != indexes.size(); i++)
 	{
 
-		if (container->isOpened == 0) continue;
-		//contNr (0), I open my backpack first so it's number is 0, and we want to loot everything that's not in main backpack into it
-		if ((container->itemsCount <= 0)) continue;
-		
-		sscanf_s(container->name, "%ld", &i);
-		std::vector<Item> itemsInContainer = container->getAllItemsInContainer(container->itemsCount, i);
+		std::vector<Item> itemsInContainer = containers[i]->getAllItemsInContainer(containers[i]->itemsCount, indexes[i]);
+
+
+		if (!containers[i]) continue;
+		if ((containers[i]->itemsCount <= 0)) continue;
+		if (containers[i]->isOpened == 0) continue;
+
 		for (Item item : itemsInContainer)
 		{
 			if (item.id == itemId)
 			{
-				return item;
+				return Item{ item.contNr, item.count, item.id, item.slotNumber };
 			}
 		}
 	}
