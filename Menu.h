@@ -71,6 +71,14 @@
 #define CLB_DISCORD (161)
 #define CLB_RUNE_MAKER (162)
 
+#define CLB_AUTO_LOGOUT_ENEMY_ON_SCREEN (163)
+#define CLB_AUTO_LOGOUT_PLAYER_ON_SCREEN (164)
+#define CLB_AUTO_LOGOUT_SKULL_ON_SCREEN (165)
+
+#define CLB_AUTO_LOGOUT_LOW_MANA (166)
+#define CLB_AUTO_LOGOUT_LOW_SOUL (167)
+#define CLB_AUTO_LOGOUT_LOW_CAP (168)
+
 #define CLB_OPEN_HEALER_WINDOW (1000)
 #define CLB_OPEN_TIMERS_WINDOW (1001)
 #define CLB_OPEN_UTILS_WINDOW (1002)
@@ -79,6 +87,7 @@
 #define CLB_OPEN_ALARMS_WINDOW (1005)
 #define CLB_OPEN_DISCORD_WINDOW (1006)
 #define CLB_OPEN_RUNE_MAKER_WINDOW (1007)
+#define CLB_OPEN_AUTO_LOGOUT_WINDOW (1008)
 
 struct InputSpellLabel
 {
@@ -106,6 +115,11 @@ struct InputDiscordLabel
 };
 
 struct InputRuneMakerLabel
+{
+	HWND inputBox;
+};
+
+struct InputAutoLogoutLabel
 {
 	HWND inputBox;
 };
@@ -150,6 +164,7 @@ namespace Menu
 	void RegisterDLLWindowAlarmsClass();
 	void RegisterDLLWindowDiscordClass();
 	void RegisterDLLWindowRuneMakerClass();
+	void RegisterDLLWindowAutoLogoutClass();
 	HMENU CreateDLLWindowMenu();
 	LRESULT CALLBACK MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	void CALLBACK MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime);
@@ -175,6 +190,7 @@ namespace Menu
 	void ToggleSwordFightingAlarm();
 	void ToggleLevelAlarm();
 	void ToggleRuneMaker();
+	void ToggleAutoLogout();
 
 	HWND CreateButton(const char* lpWindowName, int32_t x, int32_t y, int32_t iWidth, int32_t iHeight, int32_t hMenu);
 
@@ -195,6 +211,7 @@ namespace Menu
 	void CreateAlarmsMenu(HWND hWindow);
 	void CreateDiscordMenu(HWND hWindow);
 	void CreateRuneMakerMenu(HWND hWindow);
+	void CreateAutoLogoutMenu(HWND hWindow);
 	void ChangeCooldown(const InputTimerLabel& timerLabel, int32_t& cooldown);
 	void OpenFileExplorer(HWND hwnd);
 	void LoadConfig(LPWSTR filePath);
@@ -210,6 +227,7 @@ namespace Menu
 	LRESULT CALLBACK AlarmsMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK DiscordMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK RuneMakerMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK AutoLogoutMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	static HWND lBoxAmulets;
 	static HWND lBoxRings;
 
@@ -226,6 +244,7 @@ namespace Menu
 	static HWND alarmsHWND;
 	static HWND discordHWND;
 	static HWND runeMakerHWND;
+	static HWND autoLogoutHWND;
 	static MSG messages;
 	const HFONT hFont = CreateFontA(16,                        // nHeight
 		0,                         // nWidth
@@ -273,6 +292,7 @@ namespace Menu
 	static HWND buttonAlarms;
 	static HWND buttonDiscord;
 	static HWND buttonRuneMaker;
+	static HWND buttonAutoLogout;
 
 	static HWND cBoxHealFriendsSio;
 	static HWND cBoxHealFriendsUH;
@@ -336,6 +356,14 @@ namespace Menu
 	static InputRuneMakerLabel inputRMCustomSpellMana;
 
 
+	//AutoLoogut input
+	static InputAutoLogoutLabel inputALmana;
+	static InputAutoLogoutLabel inputALsoul;
+	static InputAutoLogoutLabel inputALcap;
+
+
+
+
 	static InputSpellLabel inputSioHp;
 	static InputSpellLabel inputSioMyHp;
 
@@ -386,6 +414,13 @@ namespace Menu
 
 	static RuneMakerSpell rmSpell;
 
+	// AutoLogout
+	
+	static AutoLogout autoLogout;
+
+
+
+
 
 
 
@@ -397,6 +432,7 @@ namespace Menu
 	static bool bAlarmsWindowOpen = false;
 	static bool bDiscordWindowOpen = false;
 	static bool bRuneMakerWindowOpen = false;
+	static bool bAutoLogoutWindowOpen = false;
 
 	static bool bAutoAttackState = false;
 	static bool bHealer = false;
@@ -446,6 +482,15 @@ namespace Menu
 	static bool bLevelHigherThan = false;
 	static bool bAxeFightingHigherThan = false;
 	static bool bClubFightingHigherThan = false;
+
+
+	static bool bAutoLogoutEnemyOnScreen = false;
+	static bool bAutoLogoutPlayerOnScreen = false;
+	static bool bAutoLogoutSkullOnScreen = false;
+
+	static bool bAutoLogoutLowMana = false;
+	static bool bAutoLogoutLowSoul = false;
+	static bool bAutoLogoutLowCap = false;
 
 	//Buttons
 	static HWND buttonCooldowns;
@@ -515,6 +560,16 @@ namespace Menu
 	static HWND cBoxLevel;
 	static HWND cBoxAxeFighting;
 	static HWND cBoxClubFighting;
+
+	//AutoLogout
+
+	static HWND cBoxAutoLogoutEnemyOnScreen;
+	static HWND cBoxAutoLogoutPlayerOnScreen;
+	static HWND cBoxAutoLogoutSkullOnScreen;
+
+	static HWND cBoxAutoLogoutLowMana;
+	static HWND cBoxAutoLogoutLowSoul;
+	static HWND cBoxAutoLogoutLowCap;
 
 
 

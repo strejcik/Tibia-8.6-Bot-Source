@@ -33,12 +33,17 @@ HMENU Menu::CreateDLLWindowMenu()
 }
 
 
-
+//static bool initialized = false;
 void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime)
 {
 	if (!MemReader::GetInstance().IsOnline()) return;
 
 	bool shouldPlayerAlarm = false;
+
+	//if (!initialized) {
+	//	initialized = true;
+	//	PacketSend::GetInstance().LogOut();
+	//}
 
 	if (bRuneMaker)
 	{
@@ -500,6 +505,85 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 				shouldPlayerAlarm = true;
 				break;
 			}
+		}
+	}
+
+	if (bAutoLogoutEnemyOnScreen)
+	{
+		std::vector<Entity*> entities = MemReader::GetInstance().ReadVisibleCreatures();
+		for (auto& ent : entities)
+		{
+			if (ent->guildShield == GuildShield::SeenForEveryone)
+			{
+				PacketSend::GetInstance().LogOut();
+				break;
+			}
+		}
+	}
+
+	if (bAutoLogoutPlayerOnScreen)
+	{
+		std::vector<Entity*> entities = MemReader::GetInstance().ReadVisibleCreatures();
+		for (auto& ent : entities)
+		{
+			if (MemReader::GetInstance().IsPlayer(ent->id))
+			{
+				PacketSend::GetInstance().LogOut();
+				break;
+			}
+		}
+	}
+
+	if (bAutoLogoutSkullOnScreen)
+	{
+		std::vector<Entity*> entities = MemReader::GetInstance().ReadVisibleCreatures();
+		for (auto& ent : entities)
+		{
+			if (ent->isSkulled())
+			{
+				PacketSend::GetInstance().LogOut();
+				break;
+			}
+		}
+	}
+
+	if (bAutoLogoutLowMana)
+	{
+		CSelfCharacter selfCharacter;
+		MemReader::GetInstance().ReadSelfCharacter(&selfCharacter);
+		int32_t mana = atoi(autoLogout.mana);
+
+		if (selfCharacter.mana < mana)
+		{
+			PacketSend::GetInstance().LogOut();
+		}
+
+	}
+
+	if (bAutoLogoutLowSoul)
+	{
+		uintptr_t m_ModuleBase = (uintptr_t)(GetModuleHandle(NULL));
+		int32_t mySoul = *(int*)(m_ModuleBase + Offsets::soul);
+		int32_t alSoul = atoi(autoLogout.soul);
+
+		if (mySoul < alSoul)
+		{
+			PacketSend::GetInstance().LogOut();
+		}
+
+	}
+
+	if (bAutoLogoutLowCap)
+	{
+		MemReader::GetInstance().ReadSkills(&skills);
+		std::string cap = std::to_string(skills.Cap);
+		cap.erase(cap.size() - 2);
+		int32_t myCap = std::stoi(cap);
+		int32_t capInput = atoi(autoLogout.cap);
+
+		if (myCap < capInput)
+		{
+			PacketSend::GetInstance().LogOut();
 		}
 	}
 
@@ -1261,6 +1345,23 @@ LRESULT CALLBACK Menu::MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam
 				SetWindowPos(runeMakerHWND, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 				ShowWindow(runeMakerHWND, SW_SHOWNORMAL);
 				SetForegroundWindow(runeMakerHWND);
+			}
+			break;
+		}
+
+		case CLB_OPEN_AUTO_LOGOUT_WINDOW:
+		{
+			if (!bAutoLogoutWindowOpen)
+			{
+				RECT rc;
+				RegisterDLLWindowAutoLogoutClass();
+				autoLogoutHWND = CreateWindowExA(0, "AutoLogoutWindowClass", "Auto Logout", WS_EX_LAYERED | WS_MINIMIZEBOX, 100, 100, 315, 295, NULL, NULL, inj_hModule, NULL);
+				GetWindowRect(autoLogoutHWND, &rc);
+				int xPos = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
+				int yPos = (GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2;
+				SetWindowPos(autoLogoutHWND, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+				ShowWindow(autoLogoutHWND, SW_SHOWNORMAL);
+				SetForegroundWindow(autoLogoutHWND);
 			}
 			break;
 		}
@@ -2078,10 +2179,6 @@ LRESULT CALLBACK Menu::RuneMakerMessageHandler(HWND hWindow, UINT uMessage, WPAR
 	{
 	case WM_CREATE:
 		bRuneMakerWindowOpen = true;
-		/*bDiscordWindowOpen = true;
-		CreateDiscordMenu(hWindow);
-		CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
-		ToggleDiscord();*/
 		CreateRuneMakerMenu(hWindow);
 		CheckDlgButton(hWindow, CLB_RUNE_MAKER, bRuneMaker);
 		ToggleRuneMaker();
@@ -2102,23 +2199,157 @@ LRESULT CALLBACK Menu::RuneMakerMessageHandler(HWND hWindow, UINT uMessage, WPAR
 			case BN_CLICKED:
 				if (SendDlgItemMessage(hWindow, CLB_RUNE_MAKER, BM_GETCHECK, 0, 0))
 				{
-					/*bDiscord = !bDiscord;
-					CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
-					ToggleDiscord();*/
-
 					bRuneMaker = !bRuneMaker;
 					CheckDlgButton(hWindow, CLB_RUNE_MAKER, bRuneMaker);
 					ToggleRuneMaker();
-					//toggle
 				}
 				else
 				{
-					/*bDiscord = !bDiscord;
-					CheckDlgButton(hWindow, CLB_DISCORD, bDiscord);
-					ToggleDiscord();*/
 					bRuneMaker = !bRuneMaker;
 					CheckDlgButton(hWindow, CLB_RUNE_MAKER, bRuneMaker);
 					ToggleRuneMaker();
+				}
+				break;
+			}
+			break;
+		}
+	}
+	return DefWindowProc(hWindow, uMessage, wParam, lParam);
+}
+
+LRESULT CALLBACK Menu::AutoLogoutMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMessage)
+	{
+	case WM_CREATE:
+		bAutoLogoutWindowOpen = true;
+
+		CreateAutoLogoutMenu(hWindow);
+		CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_ENEMY_ON_SCREEN, bAutoLogoutEnemyOnScreen);
+		CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_PLAYER_ON_SCREEN, bAutoLogoutPlayerOnScreen);
+		CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_SKULL_ON_SCREEN, bAutoLogoutSkullOnScreen);
+
+		CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_MANA, bAutoLogoutLowMana);
+		CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_SOUL, bAutoLogoutLowSoul);
+		CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_CAP, bAutoLogoutLowCap);
+
+		ToggleAutoLogout();
+
+
+		break;
+	case WM_CLOSE:
+		bAutoLogoutWindowOpen = false;
+		break;
+	case WM_DESTROY:
+		bAutoLogoutWindowOpen = false;
+		return 0;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case CLB_AUTO_LOGOUT_ENEMY_ON_SCREEN:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_AUTO_LOGOUT_ENEMY_ON_SCREEN, BM_GETCHECK, 0, 0))
+				{
+					bAutoLogoutEnemyOnScreen = !bAutoLogoutEnemyOnScreen;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_ENEMY_ON_SCREEN, bAutoLogoutEnemyOnScreen);
+				}
+				else
+				{
+					bAutoLogoutEnemyOnScreen = !bAutoLogoutEnemyOnScreen;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_ENEMY_ON_SCREEN, bAutoLogoutEnemyOnScreen);
+				}
+				break;
+			}
+			break;
+		case CLB_AUTO_LOGOUT_PLAYER_ON_SCREEN:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_AUTO_LOGOUT_PLAYER_ON_SCREEN, BM_GETCHECK, 0, 0))
+				{
+					bAutoLogoutPlayerOnScreen = !bAutoLogoutPlayerOnScreen;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_PLAYER_ON_SCREEN, bAutoLogoutPlayerOnScreen);
+				}
+				else
+				{
+					bAutoLogoutPlayerOnScreen = !bAutoLogoutPlayerOnScreen;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_PLAYER_ON_SCREEN, bAutoLogoutPlayerOnScreen);
+				}
+				break;
+			}
+			break;
+		case CLB_AUTO_LOGOUT_SKULL_ON_SCREEN:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_AUTO_LOGOUT_SKULL_ON_SCREEN, BM_GETCHECK, 0, 0))
+				{
+					bAutoLogoutSkullOnScreen = !bAutoLogoutSkullOnScreen;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_SKULL_ON_SCREEN, bAutoLogoutSkullOnScreen);
+				}
+				else
+				{
+					bAutoLogoutSkullOnScreen = !bAutoLogoutSkullOnScreen;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_SKULL_ON_SCREEN, bAutoLogoutSkullOnScreen);
+				}
+				break;
+			}
+			break;
+		case CLB_AUTO_LOGOUT_LOW_MANA:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_AUTO_LOGOUT_LOW_MANA, BM_GETCHECK, 0, 0))
+				{
+					bAutoLogoutLowMana = !bAutoLogoutLowMana;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_MANA, bAutoLogoutLowMana);
+					ToggleAutoLogout();
+				}
+				else
+				{
+					bAutoLogoutLowMana = !bAutoLogoutLowMana;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_MANA, bAutoLogoutLowMana);
+					ToggleAutoLogout();
+				}
+				break;
+			}
+			break;
+		case CLB_AUTO_LOGOUT_LOW_SOUL:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_AUTO_LOGOUT_LOW_SOUL, BM_GETCHECK, 0, 0))
+				{
+					bAutoLogoutLowSoul = !bAutoLogoutLowSoul;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_SOUL, bAutoLogoutLowSoul);
+					ToggleAutoLogout();
+				}
+				else
+				{
+					bAutoLogoutLowSoul = !bAutoLogoutLowSoul;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_SOUL, bAutoLogoutLowSoul);
+					ToggleAutoLogout();
+				}
+				break;
+			}
+			break;
+		case CLB_AUTO_LOGOUT_LOW_CAP:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (SendDlgItemMessage(hWindow, CLB_AUTO_LOGOUT_LOW_CAP, BM_GETCHECK, 0, 0))
+				{
+					bAutoLogoutLowCap = !bAutoLogoutLowCap;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_CAP, bAutoLogoutLowCap);
+					ToggleAutoLogout();
+				}
+				else
+				{
+					bAutoLogoutLowCap = !bAutoLogoutLowCap;
+					CheckDlgButton(hWindow, CLB_AUTO_LOGOUT_LOW_CAP, bAutoLogoutLowCap);
+					ToggleAutoLogout();
 				}
 				break;
 			}
@@ -2302,6 +2533,27 @@ void Menu::RegisterDLLWindowRuneMakerClass()
 	RegisterClassEx(&wcex);
 }
 
+void Menu::RegisterDLLWindowAutoLogoutClass()
+{
+	WNDCLASSEX wcex;
+
+
+	wcex.hInstance = inj_hModule;
+	wcex.lpszClassName = L"AutoLogoutWindowClass";
+	wcex.lpfnWndProc = AutoLogoutMessageHandler;
+	wcex.style = CS_VREDRAW | CS_HREDRAW;
+	wcex.cbSize = sizeof(wcex);
+	wcex.hIcon = LoadIcon(NULL, IDI_ERROR);
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(101));
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcex.lpszMenuName = NULL;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
+
+	RegisterClassEx(&wcex);
+}
+
 HWND Menu::CreateGeneralCheckBox(const char* lpWindowName, int32_t x, int32_t y, int32_t iWidth, int32_t iHeight, int32_t hMenu, HWND hWnd)
 {
 	HWND hwnd = CreateWindowExA(0, "button", lpWindowName, WS_CHILD | WS_VISIBLE | BS_CHECKBOX, x, y, iWidth, iHeight, hWnd, (HMENU)hMenu, NULL, 0);
@@ -2389,6 +2641,7 @@ void Menu::CreateMainMenu()
 	buttonAlarms = CreateButton("Alarms", 10, 40, 100, 20, CLB_OPEN_ALARMS_WINDOW);
 	buttonDiscord = CreateButton("Discord", 120, 40, 100, 20, CLB_OPEN_DISCORD_WINDOW);
 	buttonRuneMaker = CreateButton("Rune Maker", 230, 40, 100, 20, CLB_OPEN_RUNE_MAKER_WINDOW);
+	buttonAutoLogout = CreateButton("Auto Logout", 340, 40, 100, 20, CLB_OPEN_AUTO_LOGOUT_WINDOW);
 }
 
 
@@ -2770,9 +3023,27 @@ void Menu::CreateRuneMakerMenu(HWND hWindow)
 	CreateGeneralLabel("Rune Id", 15, 105, 140, 20, hWindow);
 	inputRMRuneId.inputBox = CreateGeneralInputBox(&rmSpell.runeId[0], 100, 105, 50, 20, hWindow);
 
-	/*CreateGeneralLabel("Custom Spell", 130, 209, 150, 20, hWindow);
-	inputSwordFightingHigherThan.inputBox = CreateGeneralInputBox(&swordFightingAlarm.spell[0], 190, 205, 50, 20, hWindow);
-	inputLevelHigherThan.inputBox = CreateGeneralInputBox(&levelAlarm.spell[0], 190, 225, 50, 20, hWindow);*/
+
+}
+
+void Menu::CreateAutoLogoutMenu(HWND hWindow)
+{
+	CreateGeneralGroupBox("Auto Logout", 5, 0, 299, 260, hWindow); // 437
+
+	cBoxAutoLogoutEnemyOnScreen = CreateGeneralCheckBox("Enemy on screen", 10, 25, 140, 20, CLB_AUTO_LOGOUT_ENEMY_ON_SCREEN, hWindow);
+
+	cBoxAutoLogoutPlayerOnScreen = CreateGeneralCheckBox("Player on screen", 10, 45, 140, 20, CLB_AUTO_LOGOUT_PLAYER_ON_SCREEN, hWindow);
+
+	cBoxAutoLogoutSkullOnScreen = CreateGeneralCheckBox("Skull on screen", 10, 65, 140, 20, CLB_AUTO_LOGOUT_SKULL_ON_SCREEN, hWindow);
+
+	cBoxAutoLogoutLowMana = CreateGeneralCheckBox("Mana  <", 10, 95, 80, 20, CLB_AUTO_LOGOUT_LOW_MANA, hWindow);
+	inputALmana.inputBox = CreateGeneralInputBox(&autoLogout.mana[0], 100, 95, 60, 20, hWindow);
+
+	cBoxAutoLogoutLowSoul = CreateGeneralCheckBox("Soul  <", 10, 120, 80, 20, CLB_AUTO_LOGOUT_LOW_SOUL, hWindow);
+	inputALsoul.inputBox = CreateGeneralInputBox(&autoLogout.soul[0], 100, 120, 60, 20, hWindow);
+
+	cBoxAutoLogoutLowCap = CreateGeneralCheckBox("Cap     <", 10, 145, 80, 20, CLB_AUTO_LOGOUT_LOW_CAP, hWindow);
+	inputALcap.inputBox = CreateGeneralInputBox(&autoLogout.cap[0], 100, 145, 60, 20, hWindow);
 }
 
 
@@ -3223,6 +3494,48 @@ void Menu::ToggleRuneMaker()
 	EnableWindow(inputRMSpellSoul.inputBox, !bRuneMaker);
 	EnableWindow(inputRMRuneDelay.inputBox, !bRuneMaker);
 	EnableWindow(inputRMRuneId.inputBox, !bRuneMaker);
+}
+
+void Menu::ToggleAutoLogout()
+{
+	autoLogout.manaLength = GetWindowTextA(inputALmana.inputBox, &autoLogout.mana[0], sizeof(autoLogout.mana));
+	autoLogout.soulLength = GetWindowTextA(inputALsoul.inputBox, &autoLogout.soul[0], sizeof(autoLogout.soul));
+	autoLogout.capLength = GetWindowTextA(inputALcap.inputBox, &autoLogout.cap[0], sizeof(autoLogout.cap));
+
+	if (autoLogout.manaLength)
+	{
+		GetWindowTextA(inputALmana.inputBox, &buf[0], sizeof(buf));
+		strcpy_s(autoLogout.mana, buf);
+	}
+	else
+	{
+		strcpy_s(autoLogout.mana, 0);
+	}
+
+	if (autoLogout.soulLength)
+	{
+		GetWindowTextA(inputALsoul.inputBox, &buf[0], sizeof(buf));
+		strcpy_s(autoLogout.soul, buf);
+	}
+	else
+	{
+		strcpy_s(autoLogout.soul, 0);
+	}
+
+	if (autoLogout.capLength)
+	{
+		GetWindowTextA(inputALcap.inputBox, &buf[0], sizeof(buf));
+		strcpy_s(autoLogout.cap, buf);
+	}
+	else
+	{
+		strcpy_s(autoLogout.cap, 0);
+	}
+
+
+	EnableWindow(inputALmana.inputBox, !bAutoLogoutLowMana);
+	EnableWindow(inputALsoul.inputBox, !bAutoLogoutLowSoul);
+	EnableWindow(inputALcap.inputBox, !bAutoLogoutLowCap);
 }
 
 

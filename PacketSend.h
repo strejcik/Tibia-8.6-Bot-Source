@@ -39,4 +39,5 @@ public:
 	void MoveItemFromPositionToContainer(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos);
 	void MoveItemFromContainerToLeftHand(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos, int32_t contNr);
 	void MoveItemFromAmuletPositionToContainer(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos);
+	void LogOut();
 };

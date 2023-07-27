@@ -393,6 +393,19 @@ struct RuneMakerSpell
 	}
 };
 
+struct AutoLogout
+{
+	char mana[150];
+	int32_t manaLength = 0;
+	char soul[150];
+	int32_t soulLength = 0;
+	char cap[150];
+	int32_t capLength = 0;
+	AutoLogout() : mana("200"), soul("10"), cap("150")
+	{
+	}
+};
+
 struct AlarmMp
 {
 	char spell[150];

@@ -157,3 +157,9 @@ void PacketSend::MoveItemFromAmuletPositionToContainer(int32_t itemId, int32_t f
 	PacketChannelId(1);
 	PacketEnd(1);
 }
+
+void PacketSend::LogOut()
+{
+	PacketStart(0x14);
+	PacketEnd(1);
+}
