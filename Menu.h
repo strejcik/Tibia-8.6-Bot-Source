@@ -24,7 +24,7 @@
 #define CLB_XRAY (114)
 #define CLB_SIO (115)
 #define CLB_LIGHT (116)
-#define CLB_MOUNT (117)
+#define CLB_ADVANCEMENT_SCREENSHOT (117)
 #define CLB_FOOD_EAT (118)
 #define CLB_MAGIC_SHIELD (119)
 #define CLB_HOLD_POSITION (120)
@@ -154,6 +154,14 @@ namespace Menu
 	static CSelfCharacter localPlayer;
 	static Skills skills;
 
+	static int32_t fistFightingLevel = 0;
+	static int32_t clubFightingLevel = 0;
+	static int32_t swordFightingLevel = 0;
+	static int32_t axeFightingLevel = 0;
+	static int32_t distanceFightingLevel = 0;
+	static int32_t shieldingLevel = 0;
+	static int32_t lvl = 0;
+
 	static FILE* f;
 
 	BOOL RegisterDLLWindowClass(const wchar_t szClassName[]);
@@ -219,8 +227,9 @@ namespace Menu
 	void SaveConfig();
 	void OpenSioListTxt();
 	void ReadSioListTxt(std::array<std::string, 100>& friendList);
-	LRESULT CALLBACK HealerMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
+	
+	LRESULT CALLBACK HealerMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK TimersMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK PvpMessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam);
@@ -452,7 +461,7 @@ namespace Menu
 	static bool bHealFriendUH = false;
 	static bool bEquipModeHotkey = false;
 	static bool bEquipModeMoveItem = false;
-	static bool bMount = false;
+	static bool bAdvancementScreenshot = false;
 	static bool bEnableLightHack = false;
 	static bool bEatFood = false;
 	static bool bHoldPosition = false;
@@ -492,6 +501,9 @@ namespace Menu
 	static bool bAutoLogoutLowSoul = false;
 	static bool bAutoLogoutLowCap = false;
 
+
+	//Read skills
+
 	//Buttons
 	static HWND buttonCooldowns;
 
@@ -526,7 +538,7 @@ namespace Menu
 	static HWND cBoxEnableAdvert;
 	static HWND cBoxEnableAntiIdle;
 	static HWND cBoxEnableLightHack;
-	static HWND cBoxEnableAutoMount;
+	static HWND cBoxEnableAdvancementScreenshot;
 	static HWND cBoxEnableEatFood;
 	static HWND cBoxEnableMagicShield;
 	static HWND cBoxLookIds;

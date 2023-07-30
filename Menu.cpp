@@ -3,11 +3,119 @@
 #include "Healer.h"
 #include "Hooks.h"
 #include "MemReader.h"
+#include <GdiPlus.h>
+#pragma comment( lib, "gdiplus" )
+#pragma comment(lib, "rpcrt4.lib") 
+
+
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
+{
+	using namespace Gdiplus;
+	UINT  num = 0;          // number of image encoders
+	UINT  size = 0;         // size of the image encoder array in bytes
+
+	ImageCodecInfo* pImageCodecInfo = NULL;
+
+	GetImageEncodersSize(&num, &size);
+	if (size == 0)
+		return -1;  // Failure
+
+	pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+	if (pImageCodecInfo == NULL)
+		return -1;  // Failure
+
+	GetImageEncoders(num, size, pImageCodecInfo);
+
+	for (UINT j = 0; j < num; ++j)
+	{
+		if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0)
+		{
+			*pClsid = pImageCodecInfo[j].Clsid;
+			free(pImageCodecInfo);
+			return j;  // Success
+		}
+	}
+
+	free(pImageCodecInfo);
+	return 0;
+}
+
+void gdiscreen()
+{
+	using namespace Gdiplus;
+	GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+	{
+		UUID uuid;
+		UuidCreate(&uuid);
+		char* str;
+		UuidToStringA(&uuid, (RPC_CSTR*)&str);
+
+
+		std::string fn1 = "Tibia-Bot[";
+		std::string fn2 = std::string(str);
+		std::string fn3 = "].png";
+		std::string fileName = fn1 + fn2 + fn3;
 
 
 
 
+		
+		std::wstring widestr = std::wstring(fileName.begin(), fileName.end());
 
+		const wchar_t* widecstr = widestr.c_str();
+		
+		
+		HDC scrdc, memdc;
+		HBITMAP membit;
+		scrdc = ::GetDC(0);
+		int Height = GetSystemMetrics(SM_CYSCREEN);
+		int Width = GetSystemMetrics(SM_CXSCREEN);
+		memdc = CreateCompatibleDC(scrdc);
+		membit = CreateCompatibleBitmap(scrdc, Width, Height);
+		HBITMAP hOldBitmap = (HBITMAP)SelectObject(memdc, membit);
+		BitBlt(memdc, 0, 0, Width, Height, scrdc, 0, 0, SRCCOPY);
+
+		Gdiplus::Bitmap bitmap(membit, NULL);
+		CLSID clsid;
+		GetEncoderClsid(L"image/png", &clsid);
+		bitmap.Save(widecstr, &clsid);
+
+		SelectObject(memdc, hOldBitmap);
+
+		DeleteObject(memdc);
+
+		DeleteObject(membit);
+
+		::ReleaseDC(0, scrdc);
+
+		RpcStringFreeA((RPC_CSTR*)&str);
+	}
+
+	GdiplusShutdown(gdiplusToken);
+}
+
+void screenshot()
+{
+	HWND tibiaWindow = FindWindowW(NULL, L"Tibia");
+
+	SetForegroundWindow(tibiaWindow);
+	SetActiveWindow(tibiaWindow);
+	SetWindowPos(tibiaWindow, HWND_TOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
+	RedrawWindow(tibiaWindow, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
+
+	SendMessage(tibiaWindow, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+
+
+	if (::GetWindowLong(tibiaWindow, GWL_EXSTYLE) & WS_EX_TOPMOST)
+	{
+		Sleep(500);
+		gdiscreen();
+		SetWindowPos(tibiaWindow, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
+	}
+}
 
 void Menu::HandleMsgs()
 {
@@ -33,17 +141,115 @@ HMENU Menu::CreateDLLWindowMenu()
 }
 
 
-//static bool initialized = false;
+static bool initializedDf = false;
+static bool initializedSf = false;
+static bool initializedFf = false;
+static bool initializedCf = false;
+static bool initializedAf = false;
+static bool initializedLvl = false;
+static bool initReadSkills = false;
+
 void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime)
 {
 	if (!MemReader::GetInstance().IsOnline()) return;
 
 	bool shouldPlayerAlarm = false;
 
-	//if (!initialized) {
-	//	initialized = true;
-	//	PacketSend::GetInstance().LogOut();
-	//}
+	if (!initReadSkills && bAdvancementScreenshot)
+	{
+		initReadSkills = true;
+		MemReader::GetInstance().ReadSkills(&skills);
+		MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
+		lvl = localPlayer.level;
+		fistFightingLevel = skills.FistFighting;
+		clubFightingLevel = skills.ClubFighting;
+		swordFightingLevel = skills.SwordFighting;
+		axeFightingLevel = skills.AxeFighting;
+		distanceFightingLevel = skills.DistanceFighting;
+	}
+
+	if (initReadSkills && bAdvancementScreenshot == false) initReadSkills = false;
+
+	if (bAdvancementScreenshot)
+	{
+		MemReader::GetInstance().ReadSkills(&skills);
+		MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
+		int32_t currentFistFightingLevel = skills.FistFighting;
+		int32_t currentDistanceFightingLevel = skills.DistanceFighting;
+		int32_t currentSwordFightingLevel = skills.SwordFighting;
+		int32_t currentClubFightingLevel = skills.ClubFighting;
+		int32_t currentAxeFightingLevel = skills.AxeFighting;
+		int32_t currentLevel = localPlayer.level;
+
+
+		if (!initializedFf && fistFightingLevel != currentFistFightingLevel) {
+			initializedFf = true;
+
+
+			screenshot();
+
+
+			fistFightingLevel = currentFistFightingLevel;
+		}
+		initializedFf = false;
+
+		if (!initializedDf && distanceFightingLevel != currentDistanceFightingLevel) {
+			initializedDf = true;
+
+			
+			screenshot();
+
+			
+			distanceFightingLevel = currentDistanceFightingLevel;
+		}
+		initializedDf = false;
+
+
+		if (!initializedSf && swordFightingLevel != currentSwordFightingLevel) {
+			initializedSf = true;
+
+
+			screenshot();
+
+
+			swordFightingLevel = currentSwordFightingLevel;
+		}
+		initializedSf = false;
+
+		if (!initializedCf && clubFightingLevel != currentClubFightingLevel) {
+			initializedCf = true;
+
+
+			screenshot();
+
+
+			clubFightingLevel = currentClubFightingLevel;
+		}
+		initializedCf = false;
+
+		if (!initializedAf && axeFightingLevel != currentAxeFightingLevel) {
+			initializedAf = true;
+
+
+			screenshot();
+
+
+			axeFightingLevel = currentAxeFightingLevel;
+		}
+		initializedAf = false;
+
+		if (!initializedLvl && lvl != currentLevel) {
+			initializedAf = true;
+
+
+			screenshot();
+
+
+			lvl = currentLevel;
+		}
+		initializedLvl = false;
+
+	}
 
 	if (bRuneMaker)
 	{
@@ -969,7 +1175,7 @@ LRESULT CALLBACK Menu::UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM w
 		//MemReader::GetInstance().EnableXray(bXray);
 		CheckDlgButton(hWindow, CLB_ANTI_IDLE, bAntiIdle);
 		CheckDlgButton(hWindow, CLB_AUTO_ATTACK, bAutoAttack);
-		CheckDlgButton(hWindow, CLB_MOUNT, bMount);
+		CheckDlgButton(hWindow, CLB_ADVANCEMENT_SCREENSHOT, bAdvancementScreenshot);
 		CheckDlgButton(hWindow, CLB_FOOD_EAT, bEatFood);
 		CheckDlgButton(hWindow, CLB_LOOK_IDS, Hooks::bLookIds);
 		CheckDlgButton(hWindow, CLB_HOLD_POSITION, bHoldPosition);
@@ -1065,19 +1271,19 @@ LRESULT CALLBACK Menu::UtilsMessageHandler(HWND hWindow, UINT uMessage, WPARAM w
 				break;
 			}
 			break;
-		case CLB_MOUNT:
+		case CLB_ADVANCEMENT_SCREENSHOT:
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				if (SendDlgItemMessage(hWindow, CLB_MOUNT, BM_GETCHECK, 0, 0))
+				if (SendDlgItemMessage(hWindow, CLB_ADVANCEMENT_SCREENSHOT, BM_GETCHECK, 0, 0))
 				{
-					bMount = !bMount;
-					CheckDlgButton(hWindow, CLB_MOUNT, bMount);
+					bAdvancementScreenshot = !bAdvancementScreenshot;
+					CheckDlgButton(hWindow, CLB_ADVANCEMENT_SCREENSHOT, bAdvancementScreenshot);
 				}
 				else
 				{
-					bMount = !bMount;
-					CheckDlgButton(hWindow, CLB_MOUNT, bMount);
+					bAdvancementScreenshot = !bAdvancementScreenshot;
+					CheckDlgButton(hWindow, CLB_ADVANCEMENT_SCREENSHOT, bAdvancementScreenshot);
 				}
 				break;
 			}
@@ -2359,6 +2565,8 @@ LRESULT CALLBACK Menu::AutoLogoutMessageHandler(HWND hWindow, UINT uMessage, WPA
 	return DefWindowProc(hWindow, uMessage, wParam, lParam);
 }
 
+
+
 BOOL Menu::RegisterDLLWindowClass(const wchar_t szClassName[])
 {
 	HBRUSH hb = ::CreateSolidBrush(RGB(30, 144, 255));
@@ -2602,8 +2810,6 @@ void Menu::Init(HMODULE hModule)
 	RegisterDLLWindowClass(L"DLLWindowClass");
 	mainHWND = CreateWindowExA(0, "DLLWindowClass", "Tibia v8.6.0.0", WS_EX_LAYERED | WS_MINIMIZEBOX, 0, 0, mainWindowWidth, mainWindowHeight, NULL, hMenu, inj_hModule, NULL);
 
-
-
 	RECT rc;
 	//retrieves the dimensions of the bounding rectangle
 	GetWindowRect(mainHWND, &rc);
@@ -2840,7 +3046,7 @@ void Menu::CreateUtilsMenu(HWND hWindow)
 
 	cBoxEnableOutfitHack = CreateGeneralCheckBox("Auto Attack", 10, 85, 100, 20, CLB_AUTO_ATTACK, hWindow);
 
-	cBoxEnableAutoMount = CreateGeneralCheckBox("Auto Mount", 10, 105, 100, 20, CLB_MOUNT, hWindow);
+	cBoxEnableAdvancementScreenshot = CreateGeneralCheckBox("Advancement Screenshot", 10, 105, 185, 20, CLB_ADVANCEMENT_SCREENSHOT, hWindow);
 
 	cBoxEnableEatFood = CreateGeneralCheckBox("Eat Food", 10, 125, 100, 20, CLB_FOOD_EAT, hWindow);
 
