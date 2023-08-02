@@ -18,11 +18,13 @@ public:
 	FnPacketInt PacketItem = nullptr;
 	FnPacketInt PacketContainer = nullptr;
 	FnPacketInt PacketChannelId = nullptr;
+	FnPacketInt PacketChannelId2 = nullptr;
 	FnPacketInt PacketPlayerId = nullptr;
 	FnPacketLPCSTR PrintWhiteText = nullptr;
 
 	
 	FnPacketByte PacketEnd = nullptr;
+	FnPacketByte PacketEnd2 = nullptr;
 
 
 	PacketSend();
@@ -39,5 +41,6 @@ public:
 	void MoveItemFromPositionToContainer(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos);
 	void MoveItemFromContainerToLeftHand(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos, int32_t contNr);
 	void MoveItemFromAmuletPositionToContainer(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos);
+	void MoveItemFromRingPositionToContainer(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos);
 	void LogOut();
 };

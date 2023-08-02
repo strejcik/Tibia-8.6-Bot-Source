@@ -8,10 +8,12 @@ Healer::Healer()
 	int32_t m_TimerHealFriend = 0;
 	int32_t m_TimerAutoHaste = 0;
 	int32_t m_TimerAntiParal = 0;
-	int32_t m_TimerEquipItem = 0;
+	int32_t m_TimerEquipAmulet = 0;
+	int32_t m_TimerEquipRing = 0;
 	int32_t m_TimerEquipRune = 0;
 	int32_t m_TimerRuneMaker = 0;
 	int32_t itemContNr = 0;
+	int32_t ringContNr = 0;
 }
 
 void Healer::HealWithSpells(const LightSpell& lightSpell, const MidSpell& midSpell, const HeavySpell& heavySpell)
@@ -150,10 +152,11 @@ void Healer::EquipAmuletBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem,
 	MemReader::GetInstance().ReadSelfCharacter(&selfCharacter);
 	int32_t currentItemOnSlot = MemReader::GetInstance().GetItemOnEquipmentSlots()->amuletId;
 	Item item = MemReader::GetInstance().ReadContainersForItem2(toEquipIfLow.Id);
+	Item item2 = MemReader::GetInstance().ReadContainersForItem2(toSwitchWhenSafe.Id);
 
 	if ((toEquipIfLow.Id) && (currentItemOnSlot != toEquipIfLow.Id) && ((selfCharacter.hpPercentage <= toEquipIfLow.hpPercentage) && !MemReader::GetInstance().IsFlagTrue(CHARACTER_FLAGS::MANA_SHIELD)))
 	{
-		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipItem, Cooldowns::GetInstance().EQUIP_ITEM)))
+		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipAmulet, Cooldowns::GetInstance().EQUIP_ITEM)))
 		{
 			if (item.id)
 			{
@@ -169,18 +172,17 @@ void Healer::EquipAmuletBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem,
 	else if ((toSwitchWhenSafe.Id) && ((currentItemOnSlot != toSwitchWhenSafe.Id)) && ((selfCharacter.hpPercentage > toSwitchWhenSafe.hpPercentage) && !MemReader::GetInstance().IsFlagTrue(CHARACTER_FLAGS::MANA_SHIELD)))
 	{
 
-		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipItem, Cooldowns::GetInstance().BETWEEN_PACKETS)))
+		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipAmulet, Cooldowns::GetInstance().BETWEEN_PACKETS)))
 		{
-			if (item.id)
+			if (item2.id)
 			{
-				PacketSend::GetInstance().MoveItemFromContainerToPosition(item.id, item.slotNumber, 0xFFFF, EquipmentItems::Amulet, 0, item.contNr);
-				itemContNr = item.contNr;
+				PacketSend::GetInstance().MoveItemFromContainerToPosition(item2.id, item2.slotNumber, 0xFFFF, EquipmentItems::Amulet, 0, item2.contNr);
 			}
 		}
 	}
 	else if ((toDequipWhenSafe.Id) && (currentItemOnSlot == toDequipWhenSafe.Id) && ((selfCharacter.hpPercentage > toDequipWhenSafe.hpPercentage) && (!MemReader::GetInstance().IsFlagTrue(CHARACTER_FLAGS::MANA_SHIELD))))
 	{
-		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipItem, Cooldowns::GetInstance().BETWEEN_PACKETS)))
+		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipAmulet, Cooldowns::GetInstance().BETWEEN_PACKETS)))
 		{
 			if (itemContNr != 0)
 			{
@@ -189,6 +191,57 @@ void Healer::EquipAmuletBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem,
 			else
 			{
 				PacketSend::GetInstance().MoveItemFromAmuletPositionToContainer(toDequipWhenSafe.Id, 0, 0xFFFF, item.contNr, 0);
+			}
+		}
+	}
+}
+
+void Healer::EquipRingBalancer(bool bEquipModeHotkey, bool bEquipModeMoveItem, const ExItem& toEquipIfLow, const ExItem& toSwitchWhenSafe, const ExItem& toDequipWhenSafe)
+{
+	CSelfCharacter selfCharacter;
+	MemReader::GetInstance().ReadSelfCharacter(&selfCharacter);
+	int32_t currentItemOnSlot = MemReader::GetInstance().GetItemOnEquipmentSlots()->ringId;
+	Item item = MemReader::GetInstance().ReadContainersForItem2(toEquipIfLow.Id);
+	Item item2 = MemReader::GetInstance().ReadContainersForItem2(toSwitchWhenSafe.Id);
+
+	if ((toEquipIfLow.Id) && (currentItemOnSlot != toEquipIfLow.Id) && ((selfCharacter.hpPercentage <= toEquipIfLow.hpPercentage)))
+	{
+		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipRing, Cooldowns::GetInstance().EQUIP_ITEM)))
+		{
+			if (item.id)
+			{
+				PacketSend::GetInstance().MoveItemFromContainerToPosition(item.id, item.slotNumber, 0xFFFF, EquipmentItems::Ring, 0, item.contNr);
+				ringContNr = item.contNr;
+
+			}
+
+
+		}
+	}
+	else if ((toSwitchWhenSafe.Id) && ((currentItemOnSlot != toSwitchWhenSafe.Id)) && ((selfCharacter.hpPercentage > toSwitchWhenSafe.hpPercentage)))
+	{
+
+		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipRing, Cooldowns::GetInstance().BETWEEN_PACKETS)))
+		{
+			if (item2.id)
+			{
+				PacketSend::GetInstance().MoveItemFromContainerToPosition(item2.id, item2.slotNumber, 0xFFFF, EquipmentItems::Ring, 0, item2.contNr);
+			}
+		}
+	}
+	else if ((toDequipWhenSafe.Id) && (currentItemOnSlot == toDequipWhenSafe.Id) && ((selfCharacter.hpPercentage > toDequipWhenSafe.hpPercentage)))
+	{
+		if ((bEquipModeMoveItem) && (Util::isNotExhausted(m_TimerEquipRing, Cooldowns::GetInstance().BETWEEN_PACKETS)))
+		{
+			//MessageBoxA(NULL, "inside", NULL, NULL);
+			
+			if (ringContNr != 0)
+			{
+				PacketSend::GetInstance().MoveItemFromRingPositionToContainer(toDequipWhenSafe.Id, 0, 0xFFFF, ringContNr, 0);
+			}
+			else
+			{
+				PacketSend::GetInstance().MoveItemFromRingPositionToContainer(toDequipWhenSafe.Id, 0, 0xFFFF, item.contNr, 0);
 			}
 		}
 	}

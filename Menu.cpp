@@ -558,7 +558,7 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 	if (bEquipModeHotkey || bEquipModeMoveItem)
 	{
 		Healer::GetInstance().EquipAmuletBalancer(bEquipModeHotkey, bEquipModeMoveItem, holdAmulet, balanceAmulet, dequipAmulet);
-		//Healer::GetInstance().EquipRingBalancer(bEquipModeHotkey, bEquipModeMoveItem, holdRing, balanceRing, dequipRing);
+		Healer::GetInstance().EquipRingBalancer(bEquipModeHotkey, bEquipModeMoveItem, holdRing, balanceRing, dequipRing);
 	}
 
 	if (bManaShield)
@@ -1493,7 +1493,7 @@ LRESULT CALLBACK Menu::MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam
 			{
 				RECT rc;
 				RegisterDLLWindowPvpClass();
-				pvpHWND = CreateWindowExA(0, "PvpWindowClass", "Pvp", WS_EX_LAYERED | WS_MINIMIZEBOX, 100, 100, 425, 325, NULL, NULL, inj_hModule, NULL);
+				pvpHWND = CreateWindowExA(0, "PvpWindowClass", "Pvp", WS_EX_LAYERED | WS_MINIMIZEBOX, 100, 100, 425, 400, NULL, NULL, inj_hModule, NULL);
 				GetWindowRect(pvpHWND, &rc);
 				int xPos = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
 				int yPos = (GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2;
@@ -1872,94 +1872,94 @@ LRESULT CALLBACK Menu::PvpMessageHandler(HWND hWindow, UINT uMessage, WPARAM wPa
 			}
 			break;
 
-			//case CLB_LIST_BOX_RINGS:
-			//	switch (HIWORD(wParam))
-			//	{
-			//	case CBN_SELCHANGE:
-			//	{
-			//		int32_t itemSelected = SendMessage((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-			//		if (selectedRingsOption == itemSelected)	break;
-			//		selectedRingsOption = itemSelected;
-			//		if (!bLoadedRings)
-			//		{
+			case CLB_LIST_BOX_RINGS:
+				switch (HIWORD(wParam))
+				{
+				case CBN_SELCHANGE:
+				{
+					int32_t itemSelected = SendMessage((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+					if (selectedRingsOption == itemSelected)	break;
+					selectedRingsOption = itemSelected;
+					if (!bLoadedRings)
+					{
 
-			//			lBoxRings = CreateGeneralComboBox("Ring Options", 10, 300, 160, 70, CLB_LIST_BOX_RINGS, hWindow);
+						lBoxRings = CreateGeneralComboBox("Ring Options", 10, 300, 160, 70, CLB_LIST_BOX_RINGS, hWindow);
 
-			//			for (int32_t i = 0; i < sizeof(ringOptions) / sizeof(ringOptions[0]); i++)
-			//			{
-			//				SendMessageA(lBoxRings, CB_ADDSTRING, 0, (LPARAM)ringOptions[i].name);
-			//			}
+						for (int32_t i = 0; i < sizeof(ringOptions) / sizeof(ringOptions[0]); i++)
+						{
+							SendMessageA(lBoxRings, CB_ADDSTRING, 0, (LPARAM)ringOptions[i].name);
+						}
 
-			//			CreateGeneralLabel("Equip%:", 180, 300, 52, 20, hWindow);
+						CreateGeneralLabel("Equip%:", 180, 300, 52, 20, hWindow);
 
-			//			inputHoldRing.inputHpPerc = CreateGeneralInputBox("90", 240, 300, 30, 20, hWindow);
+						inputHoldRing.inputHpPerc = CreateGeneralInputBox("90", 240, 300, 30, 20, hWindow);
 
-			//			CreateGeneralLabel("Item Id:", 280, 300, 45, 20, hWindow);
+						CreateGeneralLabel("Item Id:", 280, 300, 45, 20, hWindow);
 
-			//			inputHoldRing.inputItemId = CreateGeneralInputBox("3051", 330, 300, 50, 20, hWindow);
+						inputHoldRing.inputItemId = CreateGeneralInputBox("3051", 330, 300, 50, 20, hWindow);
 
-			//			bLoadedRings = true;
-			//		}
+						bLoadedRings = true;
+					}
 
-			//		switch (selectedRingsOption)
-			//		{
-			//		case 0:
-			//			if (inputDequipRing.inputItemId)
-			//			{
-			//				DestroyWindow(inputDequipRing.inputItemId);
-			//				inputDequipRing.inputItemId = NULL;
-			//				if (itemsToDeleteRings[0])
-			//				{
-			//					DestroyWindow(itemsToDeleteRings[0]);
-			//					DestroyWindow(itemsToDeleteRings[1]);
-			//				}
-			//			}
-			//			else if (inputBalanceRing.inputItemId)
-			//			{
-			//				DestroyWindow(inputBalanceRing.inputItemId);
-			//				inputBalanceRing.inputItemId = NULL;
-			//				if (itemsToDeleteRings[0])
-			//				{
-			//					DestroyWindow(itemsToDeleteRings[0]);
-			//					DestroyWindow(itemsToDeleteRings[1]);
-			//				}
-			//			}
-			//			break;
-			//		case 1:
-			//			if (inputBalanceRing.inputItemId)
-			//			{
-			//				DestroyWindow(inputBalanceRing.inputItemId);
-			//				inputBalanceRing.inputItemId = NULL;
-			//				if (itemsToDeleteRings[0])
-			//				{
-			//					DestroyWindow(itemsToDeleteRings[0]);
-			//					DestroyWindow(itemsToDeleteRings[1]);
-			//				}
-			//			}
-			//			itemsToDeleteRings[0] = CreateGeneralLabel("Dequip:", 180, 325, 42, 20, hWindow);
-			//			itemsToDeleteRings[1] = CreateGeneralLabel("Item Id:", 280, 325, 45, 20, hWindow);
-			//			inputDequipRing.inputItemId = CreateGeneralInputBox("3049", 330, 325, 50, 20, hWindow);
-			//			break;
-			//		case 2:
-			//			if (inputDequipRing.inputItemId)
-			//			{
-			//				DestroyWindow(inputDequipRing.inputItemId);
-			//				inputDequipRing.inputItemId = NULL;
-			//				if (itemsToDeleteRings[0])
-			//				{
-			//					DestroyWindow(itemsToDeleteRings[0]);
-			//					DestroyWindow(itemsToDeleteRings[1]);
-			//				}
-			//			}
-			//			itemsToDeleteRings[0] = CreateGeneralLabel("Balance:", 180, 325, 50, 20, hWindow);
-			//			itemsToDeleteRings[1] = CreateGeneralLabel("Item Id:", 280, 325, 45, 20, hWindow);
-			//			inputBalanceRing.inputItemId = CreateGeneralInputBox("3048", 330, 325, 50, 20, hWindow);
-			//			break;
-			//		}
-			//		break;
-			//	}
-			//	}
-			//	break;
+					switch (selectedRingsOption)
+					{
+					case 0:
+						if (inputDequipRing.inputItemId)
+						{
+							DestroyWindow(inputDequipRing.inputItemId);
+							inputDequipRing.inputItemId = NULL;
+							if (itemsToDeleteRings[0])
+							{
+								DestroyWindow(itemsToDeleteRings[0]);
+								DestroyWindow(itemsToDeleteRings[1]);
+							}
+						}
+						else if (inputBalanceRing.inputItemId)
+						{
+							DestroyWindow(inputBalanceRing.inputItemId);
+							inputBalanceRing.inputItemId = NULL;
+							if (itemsToDeleteRings[0])
+							{
+								DestroyWindow(itemsToDeleteRings[0]);
+								DestroyWindow(itemsToDeleteRings[1]);
+							}
+						}
+						break;
+					case 1:
+						if (inputBalanceRing.inputItemId)
+						{
+							DestroyWindow(inputBalanceRing.inputItemId);
+							inputBalanceRing.inputItemId = NULL;
+							if (itemsToDeleteRings[0])
+							{
+								DestroyWindow(itemsToDeleteRings[0]);
+								DestroyWindow(itemsToDeleteRings[1]);
+							}
+						}
+						itemsToDeleteRings[0] = CreateGeneralLabel("Dequip:", 180, 325, 42, 20, hWindow);
+						itemsToDeleteRings[1] = CreateGeneralLabel("Item Id:", 280, 325, 45, 20, hWindow);
+						inputDequipRing.inputItemId = CreateGeneralInputBox("3049", 330, 325, 50, 20, hWindow);
+						break;
+					case 2:
+						if (inputDequipRing.inputItemId)
+						{
+							DestroyWindow(inputDequipRing.inputItemId);
+							inputDequipRing.inputItemId = NULL;
+							if (itemsToDeleteRings[0])
+							{
+								DestroyWindow(itemsToDeleteRings[0]);
+								DestroyWindow(itemsToDeleteRings[1]);
+							}
+						}
+						itemsToDeleteRings[0] = CreateGeneralLabel("Balance:", 180, 325, 50, 20, hWindow);
+						itemsToDeleteRings[1] = CreateGeneralLabel("Item Id:", 280, 325, 45, 20, hWindow);
+						inputBalanceRing.inputItemId = CreateGeneralInputBox("3048", 330, 325, 50, 20, hWindow);
+						break;
+					}
+					break;
+				}
+				}
+				break;
 		}
 
 		break;
@@ -3131,10 +3131,10 @@ void Menu::CreatePvpMenu(HWND hWindow)
 
 
 
-	CreateGeneralGroupBox("Amulet Balancer", 5, 220, 410, 73, hWindow);
+	CreateGeneralGroupBox("Amulet + Ring Balancer", 5, 220, 410, 140, hWindow);
 
 	//cBoxEquipByHotkey = CreateGeneralCheckBox("Mode: hotkey", 168, 220, 107, 20, CLB_EQUIP_MODE_AS_HOTKEY, hWindow);
-	cBoxEquipByMoveItem = CreateGeneralCheckBox("Mode: move item", 168, 220, 135, 20, CLB_EQUIP_MODE_AS_MOVE_ITEM, hWindow);
+	cBoxEquipByMoveItem = CreateGeneralCheckBox("Mode: move item", 188, 220, 135, 20, CLB_EQUIP_MODE_AS_MOVE_ITEM, hWindow);
 
 	lBoxAmulets = CreateGeneralComboBox("Amulet Options", 10, 245, 160, 70, CLB_LIST_BOX_AMULETS, hWindow);
 
@@ -3146,12 +3146,12 @@ void Menu::CreatePvpMenu(HWND hWindow)
 
 
 
-	/*lBoxRings = CreateGeneralComboBox("Ring Options", 10, 300, 160, 70, CLB_LIST_BOX_RINGS, hWindow);
+	lBoxRings = CreateGeneralComboBox("Ring Options", 10, 300, 160, 70, CLB_LIST_BOX_RINGS, hWindow);
 
 	for (int32_t i = 0; i < sizeof(ringOptions) / sizeof(ringOptions[0]); i++)
 	{
 		SendMessageA(lBoxRings, CB_ADDSTRING, 0, (LPARAM)ringOptions[i].name);
-	}*/
+	}
 }
 
 void Menu::CreateAlarmsMenu(HWND hWindow)
@@ -3820,6 +3820,11 @@ void Menu::ToggleItemBalancer()
 				{
 					holdRing.hpPercentage = atoi(buf);
 					holdRing.manaPerc = 0;
+
+					balanceRing.hpPercentage = NULL;
+					balanceRing.Id = NULL;
+					balanceRing.hpPercentage = NULL;
+					balanceRing.Id = NULL;
 				}
 				else
 				{
@@ -3838,6 +3843,9 @@ void Menu::ToggleItemBalancer()
 				{
 					dequipRing.Id = atoi(buf);
 					dequipRing.hpPercentage = holdRing.hpPercentage;
+
+					balanceRing.hpPercentage = NULL;
+					balanceRing.Id = NULL;
 				}
 				else
 				{
@@ -3851,6 +3859,9 @@ void Menu::ToggleItemBalancer()
 					balanceRing.Id = atoi(buf);
 					balanceRing.hpPercentage = holdRing.hpPercentage;
 					balanceRing.manaPerc = 0;
+
+					dequipRing.hpPercentage = NULL;
+					dequipRing.Id = NULL;
 				}
 				else
 				{

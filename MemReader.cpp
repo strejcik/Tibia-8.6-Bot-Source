@@ -318,27 +318,34 @@ void MemReader::SetAttackedCreature(uint32_t creatureId)
 	*(int32_t*)(m_ModuleBase + Offsets::attackedCreature) = creatureId;
 }
 
-//void MemReader::ReadContainersForItem(int32_t itemId, Item& item)
-//{
-//	std::vector<InfoContainer*> containers = GetContainers(GetContainerListStartAddress(), {});
-//	for (InfoContainer*& container : containers)
-//	{
-//		if ((!container)) continue;
-//		//contNr (0), I open my backpack first so it's number is 0, and we want to loot everything that's not in main backpack into it
-//		if ((container->ptrToContStruct->itemsCount <= 0)) continue;
-//
-//		Item itemInBp = container->ptrToContStruct->ptrToCont->findItem(itemId, container->ptrToContStruct->itemsCount, /*container->containerNumber*/ 1);
-//
-//		if (itemInBp.count > 0)
-//		{
-//			item.contNr = itemInBp.contNr;
-//			item.count = itemInBp.count;
-//			item.id = itemInBp.id;
-//			item.slotNumber = itemInBp.slotNumber;
-//			return;
-//		}
-//	}
-//}
+void MemReader::ReadContainersForItem(int32_t itemId, Item& item)
+{
+	std::vector<ContainerStruct*> containers = GetContainers(GetContainerListStartAddress(), {});
+	std::vector<int32_t> indexes = GetContainersIndex(GetContainerListStartAddress(), {});
+
+	for (std::vector<int32_t>::size_type i = 0; i != indexes.size(); i++)
+	{
+
+		std::vector<Item> itemsInContainer = containers[i]->getAllItemsInContainer(containers[i]->itemsCount, indexes[i]);
+
+
+		if (!containers[i]) continue;
+		if ((containers[i]->itemsCount <= 0)) continue;
+		if (containers[i]->isOpened == 0) continue;
+
+		for (Item itemx : itemsInContainer)
+		{
+			if (itemx.id == itemId)
+			{
+				item.contNr = itemx.contNr;
+				item.count = itemx.count;
+				item.id = itemx.id;
+				item.slotNumber = itemx.slotNumber;
+				return;
+			}
+		}
+	}
+}
 
 void MemReader::EnableXray(bool bXray)
 {

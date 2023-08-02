@@ -14,8 +14,10 @@ PacketSend::PacketSend()
 	PacketContainer = FnPacketInt(moduleBase + 0xF8700);
 	PacketChannelId = FnPacketInt(moduleBase + 0xF8560);
 
+	PacketChannelId2 = FnPacketInt(moduleBase + 0x4F8560);
 
 	PacketEnd = FnPacketByte(moduleBase + 0xF8E40);
+	PacketEnd2 = FnPacketByte(moduleBase + 0x4F8E40);
 	PacketPlayerId = FnPacketInt(moduleBase + 0xF88A0);
 }
 
@@ -133,6 +135,21 @@ void PacketSend::MoveItemFromPositionToContainer(int32_t itemId, int32_t fromSlo
 	PacketStart(0x78);
 	PacketContainer(0xFFFF);
 	PacketContainer(6);
+	PacketChannelId(fromSlotNumber);
+	PacketContainer(itemId);
+	PacketChannelId(fromSlotNumber);
+	PacketContainer(toXPos);
+	PacketContainer(0x40 + toYPos);
+	PacketChannelId(toZPos);
+	PacketChannelId(1);
+	PacketEnd(1);
+}
+
+void PacketSend::MoveItemFromRingPositionToContainer(int32_t itemId, int32_t fromSlotNumber, int32_t toXPos, int32_t toYPos, int32_t toZPos)
+{
+	PacketStart(0x78);
+	PacketContainer(0xFFFF);
+	PacketContainer(9);
 	PacketChannelId(fromSlotNumber);
 	PacketContainer(itemId);
 	PacketChannelId(fromSlotNumber);

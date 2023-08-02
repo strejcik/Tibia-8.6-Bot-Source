@@ -42,6 +42,8 @@ public:
 	Entity* GetEntityInEntityList(uint32_t characterId);
 	uintptr_t GetContainerListStartAddress();
 
+	void ReadContainersForItem(int32_t itemId, Item& item);
+
 
 	std::vector<Entity*> GetEntityById(uint32_t creatureId);
 

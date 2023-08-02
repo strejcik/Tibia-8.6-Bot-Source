@@ -627,7 +627,7 @@ public:
 	int32_t ATTACK_ITEM = 500;
 	int32_t DROP_ITEM = 250;
 	int32_t EQUIP_ITEM = 250;
-	int32_t DEQUIP_ITEM = 1000;
+	int32_t DEQUIP_ITEM = 250;
 
 	int32_t SAY_ADVERTISING = 60500;
 	int32_t COMBO_BOT = 200;
