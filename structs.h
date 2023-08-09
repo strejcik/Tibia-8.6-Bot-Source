@@ -53,6 +53,11 @@ namespace Offsets
 
 	static constexpr uintptr_t offsetGo = 0x23FF44;
 
+	static constexpr uintptr_t gameClient = 0x39CF6C;
+	static constexpr uintptr_t gameClient2 = 0x0024F5C8;
+
+	static constexpr uintptr_t playerMovingX = 0x0063FEE8;
+	static constexpr uintptr_t playerMovingY = 0x0063FEE4;
 };
 
 class Self
@@ -65,6 +70,40 @@ public:
 	int32_t goToX; //0x0044
 	int32_t walkDir; //0x0048
 }; //Size: 0x004C
+
+struct MagicWall
+{
+	int32_t xPos = 0;
+	int32_t yPos = 0;
+	int32_t zPos = 0;
+	int32_t time;
+};
+
+class GameClient
+{
+public:
+	int32_t windowXPos; //0x0000
+	int32_t windowYPos; //0x0004
+	char pad_0008[8]; //0x0008
+	int32_t windowHeight; //0x0010
+	int32_t windowWidth; //0x0014
+	char pad_0018[60]; //0x0018
+	int32_t mouseXPos; //0x0054
+	int32_t mouseYPos; //0x0058
+}; //Size: 0x005C
+
+class GameClient2
+{
+public:
+	int32_t smth1;
+	int32_t smth2; 
+	char pad_0008[12]; 
+	int32_t WindowYPos; 
+	int32_t WindowXPos;
+	int32_t WindowWidth;
+	int32_t WindowHeight;
+}; 
+
 
 class Self2
 {
@@ -205,7 +244,7 @@ class MapObject
 {
 public:
 	int32_t itemsCount; //0x0000
-	char pad_0004[12]; //0x0004 (orig: 44)
+	char pad_0004[12];
 	MapItem* tileItem;
 
 	std::vector<MapItem*> readTile()
@@ -219,8 +258,6 @@ public:
 
 			mapItems.emplace_back(item);
 		}
-		/*std::string a = std::to_string(mapItems[0]->itemCount);
-		MessageBoxA(NULL, a.c_str(), "asd", NULL);*/
 		return mapItems;
 	}
 }; //Size: 0x003C
@@ -228,33 +265,35 @@ public:
 class Entity
 {
 public:
-	int32_t id; //0x0000
-	char name[32]; //0x0004
-	int32_t xPos; //0x0024
-	int32_t yPos; //0x0028
-	int32_t zPos; //0x002C
-	char pad_0030[24]; //0x0030
-	int32_t speed; //0x0048
-	int32_t isWalking; //0x004C
-	int32_t direction; //0x0050
-	int32_t walkDir; //0x0054
-	char pad_0058[8]; //0x0058
-	int32_t outfitId; //0x0060
-	int32_t headColor; //0x0064
-	int32_t primaryColor; //0x0068
-	int32_t secondaryColor; //0x006C
-	int32_t detailColor; //0x0070
-	int32_t addon; //0x0074
-	int32_t light; //0x0078
-	int32_t lightColor; //0x007C
-	char pad_0078[8]; //0x0078
-	int32_t hpPercentage; //0x0088
-	char pad_008C[8]; //0x008C
-	int32_t skull; //0x0094
-	int32_t partyShield; //0x0098
-	char pad_009C[4]; //0x009C
-	int32_t guildShield; //0x00A0
-	char pad_00A4[4]; //0x00A4
+	int32_t id; 
+	char name[32]; 
+	int32_t xPos; 
+	int32_t yPos; 
+	int32_t zPos; 
+	int32_t movingX;
+	int32_t movingY; 
+	char pad_0038[16]; 
+	int32_t speed; 
+	int32_t isWalking; 
+	int32_t direction; 
+	int32_t walkDir; 
+	char pad_0058[8]; 
+	int32_t outfitId; 
+	int32_t headColor; 
+	int32_t primaryColor; 
+	int32_t secondaryColor; 
+	int32_t detailColor; 
+	int32_t addon; 
+	int32_t light; 
+	int32_t lightColor; 
+	char pad_0078[8]; 
+	int32_t hpPercentage; 
+	char pad_008C[8]; 
+	int32_t skull; 
+	int32_t partyShield; 
+	char pad_009C[4]; 
+	int32_t guildShield; 
+	char pad_00A4[4];
 
 	bool isInParty()
 	{
@@ -685,6 +724,8 @@ public:
 	int32_t yPos;
 	int32_t zPos;
 	int32_t id;
+	int32_t movingX;
+	int32_t movingY; 
 	int32_t outfitId;
 	int32_t headColor;
 	int32_t bodyColor;

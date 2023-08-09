@@ -50,6 +50,7 @@ public:
 
 
 	bool IsOnline();
+	bool IsMagicWall(int32_t itemId);
 	bool IsMonster(int32_t creatureId);
 	bool IsPlayer(int32_t creatureId);
 	bool IsNPC(int32_t creatureId);

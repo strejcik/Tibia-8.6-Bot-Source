@@ -48,6 +48,9 @@ void MemReader::ReadSelfCharacter(CSelfCharacter* character)
 		character->skull = selfEnt->skull;
 		character->partyShield = selfEnt->partyShield;
 		character->guildShield = selfEnt->guildShield;
+
+		character->movingX = selfEnt->movingX;
+		character->movingY = selfEnt->movingY;
 	}
 }
 
@@ -290,6 +293,10 @@ MapObject* MemReader::ReadMapTile(int32_t relativeX, int32_t relativeY)
 	return mapObject;
 }
 
+bool MemReader::IsMagicWall(int32_t itemId)
+{
+	return (itemId == 10181 || itemId == 10182 || itemId == 2128 || itemId == 2130 || itemId == 2129);
+}
 
 std::vector<Entity*> MemReader::ReadVisibleMonsters()
 {
