@@ -72,11 +72,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\barte\OneDrive\Desktop\asdasdasd\Tibia-8.6-Bot-Source\jwt\jwt-cpp;C:\Users\barte\OneDrive\Desktop\asdasdasd\Tibia-8.6-Bot-Source\jwt\picojson;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\barte\OneDrive\Desktop\asdasdasd\Tibia-8.6-Bot-Source\dependencies\include\dpp-10.0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\barte\OneDrive\Desktop\asdasdasd\Tibia-8.6-Bot-Source\dependencies\32\release\lib\dpp-10.0;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\barte\OneDrive\Desktop\asdasdasd\Tibia-8.6-Bot-Source\jwt\jwt-cpp;C:\Users\barte\OneDrive\Desktop\asdasdasd\Tibia-8.6-Bot-Source\jwt\picojson;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -112,7 +113,10 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -120,7 +124,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>

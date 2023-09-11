@@ -1,5 +1,4 @@
 #pragma once
-#include <Windows.h>
 #include <string>
 
 
@@ -607,4 +606,8 @@ namespace Menu
 
 	//RuneMaker
 	static int32_t clockRuneMaker;
+
+	static int32_t socketLoop;
 };
+
+

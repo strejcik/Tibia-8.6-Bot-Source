@@ -31,6 +31,9 @@
     <Filter Include="AutoAttack">
       <UniqueIdentifier>{54a6d23d-596f-45fe-aff8-900e3c652e91}</UniqueIdentifier>
     </Filter>
+    <Filter Include="jwt">
+      <UniqueIdentifier>{4b9d1cf1-db6f-4ab4-bb35-9e95364c5cbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

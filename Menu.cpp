@@ -4,8 +4,32 @@
 #include "Hooks.h"
 #include "MemReader.h"
 #include <GdiPlus.h>
+#include <condition_variable>
+#include <WS2tcpip.h>
+#include <boost/array.hpp>
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
+
+
+using namespace std;
 #pragma comment( lib, "gdiplus" )
 #pragma comment(lib, "rpcrt4.lib") 
+
+#pragma warning(disable:4996)
+
+std::stringstream buffer;
+
+
+
+
+
+
+
+
+
+
+
 
 
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
@@ -149,11 +173,504 @@ static bool initializedAf = false;
 static bool initializedLvl = false;
 static bool initReadSkills = false;
 
+
+static bool mobileMode = false;
+static bool initializedManaAmount = false;
+
+
+
+std::wstring ExePath() {
+	TCHAR buffer[MAX_PATH] = { 0 };
+	GetModuleFileName(NULL, buffer, MAX_PATH);
+	std::wstring::size_type pos = std::wstring(buffer).find_last_of(L"\\/");
+	return std::wstring(buffer).substr(0, pos);
+}
+
+void ReplaceInFile(string inputfile, string outputfile, string replace_what, string replace_with) {
+
+	//Read file into string
+	ifstream ifs(inputfile);
+	string inputtext((istreambuf_iterator<char>(ifs)),
+		istreambuf_iterator<char>());
+	ifs.close();
+
+
+	//Replace string
+	size_t replace_count = 0;
+	size_t found = !string::npos /*not npos*/;
+	while (!(found == string::npos)) {
+		found = inputtext.find(replace_what, found);
+		if (found != string::npos) {
+			++replace_count;
+			inputtext.replace(found, replace_what.length(), replace_with);
+		}
+	}
+
+	//Update file
+	ofstream ofs(outputfile /*,ios::trunc*/); //ios::trunc with clear file first, else use ios::app, to append!!
+	ofs << inputtext; //output now-updated string
+	ofs.close();
+}
+vector<string> readFromFile2(const char* filePath) {
+	vector<string> container;
+	ifstream obj(filePath); // automatically our file would be open
+	if (obj.is_open()) { // we check anyways
+		string line = "";
+		while (getline(obj, line)) {
+			if (!line.empty()) // prevent us to insert empty line into our vector
+				container.push_back(line);
+		}
+		obj.close(); // close after we finish reading to avoid corruption
+	}
+	return container;
+}
+
+wstring readFromFile(const char* filePath) {
+	//vector<string> container;
+	//ifstream obj(filePath); // automatically our file would be open
+	//if (obj.is_open()) { // we check anyways
+	//	string line = "";
+	//	while (getline(obj, line)) {
+	//		if (!line.empty()) // prevent us to insert empty line into our vector
+	//			container.push_back(line);
+	//	}
+	//	obj.close(); // close after we finish reading to avoid corruption
+	//}
+	//return container;
+
+
+	std::stringstream ss;
+	std::ifstream fin(filePath);
+	ss << fin.rdbuf(); // dump file contents into a stringstream
+	std::string const& s = ss.str();
+	std::wstring ws;
+	ws.resize(s.size() / sizeof(wchar_t));
+	std::memcpy(&ws[0], s.c_str(), s.size());
+	return ws;
+}
+
+inline bool exists_test(const std::string& name) {
+	ifstream f(name.c_str());
+	return f.good();
+}
+
+string token;
+string runGenerateToken()
+{
+	wstring path = ExePath();
+	std::string exePath(path.begin(), path.end());
+	string generateTokenPath;
+	generateTokenPath = exePath;
+	generateTokenPath+= R"(\token.ps1)";
+	char result[1024];   // array to hold the result.
+
+	const char* s1 = "powershell.exe -ExecutionPolicy Bypass -F ";
+	strcat_s(result, s1);
+	const char* s2 = generateTokenPath.c_str();
+	strcat_s(result, s2);
+
+
+	string script = "$headers = [ordered]@{\n"
+	"    \"alg\"=\"HS256\"    \n"
+	"    \"typ\"=\"JWT\"\n"
+	"}\n"
+	"\n"
+	"$payload = [ordered]@{\n"
+	"  \"sub\" = \"1234567890\"\n"
+	"  \"name\" = \"john doe\"\n"
+	"  \"iss\" = \"pc\"\n"
+	"  \"iat\" = 1516239022\n"
+	"}\n"
+	"\n"
+	"$secret = \"secret\" #\"GQDstcKsx0NHjPOuXOYg5MbeJ1XT0uFiwDVvVBrk\"\n"
+	"\n"
+	"Add-Type -AssemblyName System.Security\n"
+	"\n"
+	"\n"
+	"Function Get-HMACSHA512 {\n"
+	"    \n"
+	"    param(\n"
+	"         [Parameter(Mandatory=$true)][String]$data\n"
+	"        ,[Parameter(Mandatory=$true)][String]$key\n"
+	"    )\n"
+	"    \n"
+	"    $hmacsha = New-Object System.Security.Cryptography.HMACSHA256  \n"
+	"    $hmacsha.key = [Text.Encoding]::UTF8.GetBytes($key)\n"
+	"    $bytesToSign = [Text.Encoding]::UTF8.GetBytes($data)\n"
+	"    $sign = $hmacsha.ComputeHash($bytesToSign)\n"
+	"\n"
+	"    return $sign\n"
+	"\n"
+	"}\n"
+	"\n"
+	"Function Get-StringFromByte {\n"
+	"    \n"
+	"    param(\n"
+	"        [Parameter(Mandatory=$true)][byte[]]$byteArray\n"
+	"    )\n"
+	"\n"
+	"    $stringBuilder = \"\"\n"
+	"    $byteArray | ForEach { $stringBuilder += $_.ToString(\"x2\") }\n"
+	"    return $stringBuilder\n"
+	"\n"
+	"}\n"
+	"\n"
+	"Function Get-Base64UrlEncodeFromString {\n"
+	"    \n"
+	"    param(\n"
+	"         [Parameter(Mandatory=$true)][String]$inputString\n"
+	"    )\n"
+	"\n"
+	"    $inputBytes = [Text.Encoding]::UTF8.GetBytes($inputString)\n"
+	"    \n"
+	"    # Special \"url-safe\" base64 encode.\n"
+	"    $base64 = [System.Convert]::ToBase64String($inputBytes,[Base64FormattingOptions]::None).Replace('+', '-').Replace('/', '_').Replace(\"=\", \"\")\n"
+	"\n"
+	"    return $base64\n"
+	"\n"
+	"}\n"
+	"\n"
+	"Function Get-Base64UrlEncodeFromByteArray {\n"
+	"    \n"
+	"    param(\n"
+	"         [Parameter(Mandatory=$true)][byte[]]$byteArray\n"
+	"    )\n"
+	"   \n"
+	"    # Special \"url-safe\" base64 encode.\n"
+	"    $base64 = [System.Convert]::ToBase64String($byteArray,[Base64FormattingOptions]::None).Replace('+', '-').Replace('/', '_').Replace(\"=\", \"\")\n"
+	"\n"
+	"    return $base64\n"
+	"\n"
+	"}\n"
+	"\n"
+	"Function Get-Base64FromString {\n"
+	"    \n"
+	"    param(\n"
+	"         [Parameter(Mandatory=$true)][String]$inputString\n"
+	"    )\n"
+	"\n"
+	"    $inputBytes = [Text.Encoding]::UTF8.GetBytes($inputString)\n"
+	"    \n"
+	"    # Special \"url-safe\" base64 encode.\n"
+	"    $base64 = [System.Convert]::ToBase64String($inputBytes,[Base64FormattingOptions]::None)\n"
+	"\n"
+	"    return $base64\n"
+	"\n"
+	"}\n"
+	"\n"
+	"Function Get-Base64FromByteArray {\n"
+	"    \n"
+	"    param(\n"
+	"         [Parameter(Mandatory=$true)][byte[]]$byteArray\n"
+	"    )\n"
+	"    \n"
+	"    $base64 = [System.Convert]::ToBase64String($byteArray,[Base64FormattingOptions]::None)\n"
+	"\n"
+	"    return $base64\n"
+	"\n"
+	"}\n"
+	"\n"
+	"# Add missing \"=\" at the end and check url-safe encodings\n"
+	"Function Check-Base64 {\n"
+	"\n"
+	"    param(\n"
+	"         [Parameter(Mandatory=$true)][String]$inputString\n"
+	"    )\n"
+	"\n"
+	"    #$input\n"
+	"    $encoded = $inputString.Replace('-','+').Replace('_','/')\n"
+	"    $d = $encoded.Length % 4\n"
+	"    if ( $d -ne 0 ) {\n"
+	"        $encoded  = $encoded.TrimEnd('=')\n"
+	"        if ( $d % 2 -gt 0 ) {\n"
+	"            $encoded += '='\n"
+	"        } else {\n"
+	"            $encoded += '=='\n"
+	"        }\n"
+	"    }\n"
+	"    return $encoded\n"
+	"\n"
+	"}\n"
+	"\n"
+	"Function Create-JWT {\n"
+	"\n"
+	"    param(\n"
+	"          [Parameter(Mandatory=$true)][System.Collections.Specialized.OrderedDictionary]$headers\n"
+	"         ,[Parameter(Mandatory=$true)][System.Collections.Specialized.OrderedDictionary]$payload\n"
+	"         ,[Parameter(Mandatory=$true)][string]$secret\n"
+	"    )\n"
+	"\n"
+	"    $headersJson = $headers | ConvertTo-Json -Compress\n"
+	"    $payloadJson = $payload | ConvertTo-Json -Compress\n"
+	"    $headersEncoded = Get-Base64UrlEncodeFromString -inputString $headersJson #[System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($headersJson),[Base64FormattingOptions]::None)\n"
+	"    $payloadEncoded = Get-Base64UrlEncodeFromString -inputString $payloadJson #[System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($payloadJson),[Base64FormattingOptions]::None)\n"
+	"\n"
+	"    $content = \"$( $headersEncoded ).$( $payloadEncoded )\"\n"
+	"\n"
+	"    $signatureByte = Get-HMACSHA512 -data $content -key $secret\n"
+	"    $signature = Get-Base64UrlEncodeFromByteArray -byteArray $signatureByte\n"
+	"\n"
+	"    $jwt = \"$( $headersEncoded ).$( $payloadEncoded ).$( $signature )\"\n"
+	"\n"
+	"    return $jwt\n"
+	"\n"
+	"}\n"
+	"\n"
+	"# creation of jwt\n"
+	"\n"
+	"$jwt = Create-JWT -headers $headers -payload $payload -secret $secret\n"
+	"\n"
+	"$jwt | Out-File -FilePath infinity";
+
+	ofstream file;
+	file.open("generateToken1.ps1");
+	file << script;
+	file.close();
+	ReplaceInFile("generateToken1.ps1", "token.ps1", "infinity", generateTokenPath.c_str());
+	if (system(result) == 0)
+	{
+		remove("generateToken1.ps1");
+
+		std::wstring wFromFile = readFromFile("token.ps1");
+		std::wofstream fileOut("token.txt");
+		fileOut.imbue(std::locale(fileOut.getloc(), new std::codecvt_utf8_utf16<wchar_t>));
+		fileOut << wFromFile;
+	}
+	remove("generateToken1.ps1");
+	remove("token.ps1");
+
+	vector<string> t = readFromFile2("token.txt");
+	std::string tokenResult = std::accumulate(t.begin(), t.end(), std::string{});
+	tokenResult.erase(0, 3);
+	remove("token.txt");
+	return tokenResult;
+}
+
+
+
+
+
+using boost::asio::ip::tcp;
+
+class line_client
+{
+public:
+	tcp::socket socket_;
+	line_client(boost::asio::io_service& io_service, tcp::resolver::iterator endpoint_iterator)
+		: io_service_(io_service), socket_(io_service)
+	{
+		tcp::endpoint endpoint = *endpoint_iterator;
+		//socket_.non_blocking(true);
+		socket_.async_connect(
+			endpoint,
+			boost::bind(&line_client::handle_connect, this, boost::asio::placeholders::error, ++endpoint_iterator));
+	}
+
+	void write(std::string message)
+	{
+		io_service_.post(boost::bind(&line_client::do_write, this, message));
+	}
+
+	void close()
+	{
+		io_service_.post(boost::bind(&line_client::do_close, this));
+	}
+	std::string reply, r, msg;
+
+private:
+
+	std::string bufferToString(char* buffer, int bufflen)
+	{
+		std::string ret(buffer, bufflen);
+
+		return ret;
+	}
+	void handle_connect(const boost::system::error_code& error, tcp::resolver::iterator endpoint_iterator)
+	{
+		using boost::asio::async_read_until;
+		using boost::asio::buffer;
+
+		if (error) {
+			std::cerr << "connection error: " << error << std::endl;
+
+			if (endpoint_iterator == tcp::resolver::iterator())
+			{
+				std::cerr << "not connecting any longer" << std::endl;
+				return;
+			}
+
+			socket_.close();
+
+			tcp::endpoint endpoint = *endpoint_iterator;
+
+			socket_.async_connect(
+				endpoint,
+				boost::bind(&line_client::handle_connect, this, boost::asio::placeholders::error, ++endpoint_iterator));
+
+			return;
+		}
+		
+		
+		
+		std::vector<char> data(socket_.available());
+		
+
+				
+		
+		
+		
+		
+		boost::asio::async_read(socket_,
+					boost::asio::buffer(data),
+					[this](boost::system::error_code ec, std::size_t length)
+				{
+					if (!ec)
+					{
+						handle_read(ec, length);
+					}
+					else
+					{
+						socket_.close();
+					}
+				});
+
+
+	}
+
+	void handle_read(const boost::system::error_code& error, size_t size)
+	{
+		using boost::asio::async_read_until;
+		using boost::asio::buffer;
+
+		if (error) {
+			do_close();
+			return;
+		}
+
+
+		boost::asio::async_read(socket_,
+			boost::asio::buffer(&r[0], socket_.available()),
+			[this](boost::system::error_code ec, std::size_t length)
+		{
+			if (!ec)
+			{
+				r = "";
+				handle_read(ec, length);
+			}
+			else
+			{
+				socket_.close();
+			}
+		});
+
+	
+	}
+
+	void report_error(boost::system::error_code ec) {
+		std::cout << "Error: " << ec.message() << "\n";
+	}
+
+	void do_write(std::string message)
+	{
+		using boost::asio::async_write;
+		using boost::asio::buffer;
+
+
+		msg = message;
+
+		async_write(
+			socket_,
+			buffer(&msg[0], msg.length()),
+			[this](boost::system::error_code ec, std::size_t length) {
+				handle_write(ec, length);
+		});
+	}
+
+	void handle_write(const boost::system::error_code& error, std::size_t length)
+	{
+		using boost::asio::async_write;
+		using boost::asio::buffer;
+
+		if (error) {
+			do_close();
+			return;
+		}
+
+		async_write(
+			socket_,
+			buffer(&msg[0], msg.length()),
+			[this](boost::system::error_code ec, std::size_t length) {
+			handle_write(ec, length);
+		});
+	}
+
+	void do_close() {
+		std::cerr << "closing socket" << std::endl;
+		socket_.close();
+	}
+
+private:
+	boost::asio::io_service& io_service_;
+	boost::asio::streambuf buffer_;
+};
+
+
+
+
+
+boost::asio::io_service io_service;
+tcp::resolver resolver(io_service);
+tcp::resolver::query query("192.168.1.106", "8081");
+tcp::resolver::iterator i = resolver.resolve(query);
+line_client client(io_service, i);
+
+
+
+std::once_flag initToken;
+
+
+
 void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime)
 {
+
+
 	if (!MemReader::GetInstance().IsOnline()) return;
 
+
+
 	bool shouldPlayerAlarm = false;
+	if (Util::isNotExhausted(socketLoop, 1000) && mobileMode)
+	{
+			io_service.run_one();
+
+			std::call_once(initToken, [] {
+				AllocConsole();
+				freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+				cout << "Token has been generated. You can close this window now.";
+
+				buffer << "pc-token?";
+				buffer << runGenerateToken();
+				std::string message(buffer.str());
+				client.write(message);
+				FreeConsole();
+			});
+
+			CSelfCharacter selfCharacter;
+			MemReader::GetInstance().ReadSelfCharacter(&selfCharacter);
+			Skills skills;
+			MemReader::GetInstance().ReadSkills(&skills);
+			std::string sendCharDetails = "character-details-from-pc?" + std::string(selfCharacter.name) + " " + std::to_string(selfCharacter.level) + " " + std::to_string(selfCharacter.health) + " " + std::to_string(selfCharacter.mana);
+			
+
+		
+			client.write(sendCharDetails);
+
+
+
+			io_service.reset();
+
+			//client.close();
+	}
 
 	if (!initReadSkills && bAdvancementScreenshot)
 	{
@@ -1410,6 +1927,7 @@ LRESULT CALLBACK Menu::MessageHandler(HWND hWindow, UINT uMessage, WPARAM wParam
 		if (f) fclose(f);
 		FreeConsole();
 		Hooks::UnHook();
+		client.close();
 		PostQuitMessage(0);
 		return 0;
 	case WM_COMMAND:
