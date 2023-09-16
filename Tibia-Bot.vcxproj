@@ -24,6 +24,7 @@
     <ProjectGuid>{cb595939-679b-4145-a362-690fe76a54ba}</ProjectGuid>
     <RootNamespace>TibiaBot</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Infinity</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

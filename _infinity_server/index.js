@@ -11,7 +11,7 @@ var net = require('net');
 var StringDecoder = require('string_decoder').StringDecoder;
 
 const {request_switch} = require('./switch');
-
+const { addUser, removeUser, getUser, getUsers, pairUsers, getPairedUsersByName, removePairedUser, areUsersPaired} = require('./users');
 
 
 var s = net.createServer(function(socket) {
@@ -24,12 +24,15 @@ var s = net.createServer(function(socket) {
 
   socket.on('end', function () {
     console.log('end, socket disconnected', socket.name);
+    removePairedUser(socket.id);
+    console.log(socket.id);
     socket.end();
-      socket.destroy();
+    socket.destroy();
   });
 
   socket.on('close', function () {
       console.log('close, socket disconnected', socket.name);
+      removePairedUser(socket.id);
       socket.end();
       socket.destroy();
   });

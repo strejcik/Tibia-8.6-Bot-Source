@@ -9,6 +9,7 @@ import 'package:tcp_socket_connection/tcp_socket_connection.dart';
 
 late String token;
 String message = "";
+String isAuth = "";
 ValueNotifier<String> myString = ValueNotifier<String>('');
 
 TcpSocketConnection socket = TcpSocketConnection("192.168.1.106", 8081);

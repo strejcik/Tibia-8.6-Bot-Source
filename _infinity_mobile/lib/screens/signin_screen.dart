@@ -29,9 +29,15 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void messageReceived(String msg) {
-    setState(() {
-      message = msg;
-    });
+    if (msg == "authorized" || msg == "unauthorized") {
+      setState(() {
+        isAuth = msg;
+      });
+    } else {
+      setState(() {
+        message = msg;
+      });
+    }
   }
 
   //starting the connection and listening to the socket asynchronously
@@ -131,12 +137,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
   Future<bool> fetchSocketResponse() =>
       Future.delayed(Duration(seconds: 1), () {
-        if (message == "unauthorized") {
+        if (isAuth == "unauthorized") {
           Navigator.push(
               context, MaterialPageRoute(builder: (context) => SignInScreen()));
         }
 
-        if (message == "authorized") {
+        if (isAuth == "authorized") {
           Navigator.push(
               context, MaterialPageRoute(builder: (context) => HomeScreen()));
         }

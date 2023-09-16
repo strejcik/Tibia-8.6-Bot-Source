@@ -10,7 +10,7 @@
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
-
+#include <deque>
 
 using namespace std;
 #pragma comment( lib, "gdiplus" )
@@ -78,7 +78,7 @@ void gdiscreen()
 		UuidToStringA(&uuid, (RPC_CSTR*)&str);
 
 
-		std::string fn1 = "Tibia-Bot[";
+		std::string fn1 = "Infinity[";
 		std::string fn2 = std::string(str);
 		std::string fn3 = "].png";
 		std::string fileName = fn1 + fn2 + fn3;
@@ -174,8 +174,12 @@ static bool initializedLvl = false;
 static bool initReadSkills = false;
 
 
+
+static bool _socketInitReadSkills = false;
+
+
 static bool mobileMode = false;
-static bool initializedManaAmount = false;
+static bool _socketIsRead = false;
 
 
 
@@ -451,11 +455,10 @@ string runGenerateToken()
 
 
 using boost::asio::ip::tcp;
-
+typedef std::deque<std::string> chat_message_queue;
 class line_client
 {
 public:
-	tcp::socket socket_;
 	line_client(boost::asio::io_service& io_service, tcp::resolver::iterator endpoint_iterator)
 		: io_service_(io_service), socket_(io_service)
 	{
@@ -570,23 +573,62 @@ private:
 		std::cout << "Error: " << ec.message() << "\n";
 	}
 
+	//void do_write(std::string message)
+	//{
+	//	using boost::asio::async_write;
+	//	using boost::asio::buffer;
+
+
+	//	msg = message;
+
+	//	async_write(
+	//		socket_,
+	//		buffer(&msg[0], msg.length()),
+	//		[this](boost::system::error_code ec, std::size_t length) {
+	//			handle_write(ec, length);
+	//	});
+	//}
+
+	//void handle_write(const boost::system::error_code& error, std::size_t length)
+	//{
+	//	using boost::asio::async_write;
+	//	using boost::asio::buffer;
+
+	//	if (error) {
+	//		do_close();
+	//		return;
+	//	}
+
+	//	async_write(
+	//		socket_,
+	//		buffer(&msg[0], msg.length()),
+	//		[this](boost::system::error_code ec, std::size_t length) {
+	//		handle_write(ec, length);
+	//	});
+	//}
+
+
+
 	void do_write(std::string message)
 	{
 		using boost::asio::async_write;
 		using boost::asio::buffer;
 
+		bool write_in_progress = !write_msgs_.empty();
 
-		msg = message;
+		write_msgs_.push_back(message);
+
+		if (write_in_progress) {
+			return;
+		}
 
 		async_write(
 			socket_,
-			buffer(&msg[0], msg.length()),
-			[this](boost::system::error_code ec, std::size_t length) {
-				handle_write(ec, length);
-		});
+			buffer(write_msgs_.front().data(), write_msgs_.front().length()),
+			boost::bind(&line_client::handle_write, this, boost::asio::placeholders::error));
 	}
 
-	void handle_write(const boost::system::error_code& error, std::size_t length)
+	void handle_write(const boost::system::error_code& error)
 	{
 		using boost::asio::async_write;
 		using boost::asio::buffer;
@@ -596,12 +638,15 @@ private:
 			return;
 		}
 
-		async_write(
-			socket_,
-			buffer(&msg[0], msg.length()),
-			[this](boost::system::error_code ec, std::size_t length) {
-			handle_write(ec, length);
-		});
+		write_msgs_.pop_front();
+
+		if (!write_msgs_.empty())
+		{
+			async_write(
+				socket_,
+				buffer(write_msgs_.front().data(), write_msgs_.front().length()),
+				boost::bind(&line_client::handle_write, this, boost::asio::placeholders::error));
+		}
 	}
 
 	void do_close() {
@@ -609,9 +654,13 @@ private:
 		socket_.close();
 	}
 
+
+
 private:
 	boost::asio::io_service& io_service_;
+	tcp::socket socket_;
 	boost::asio::streambuf buffer_;
+	chat_message_queue write_msgs_;
 };
 
 
@@ -628,7 +677,10 @@ line_client client(io_service, i);
 
 std::once_flag initToken;
 
-
+struct RunOnce {
+	template <typename T>
+	RunOnce(T&& f) { f(); }
+};
 
 void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD dwTime)
 {
@@ -636,14 +688,29 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 
 	if (!MemReader::GetInstance().IsOnline()) return;
 
+	if (!_socketInitReadSkills && mobileMode)
+	{
+		_socketInitReadSkills = true;
+		MemReader::GetInstance().ReadSkills(&skills);
+		MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
 
+		_socket_fistFightingLevel = skills.FistFighting;
+		_socket_clubFightingLevel = skills.ClubFighting;
+		_socket_swordFightingLevel = skills.SwordFighting;
+		_socket_axeFightingLevel = skills.AxeFighting;
+		_socket_distanceFightingLevel = skills.DistanceFighting;
+		_socket_shieldingLevel = skills.Shielding;
+		_socket_lvl = localPlayer.level;
+		_socket_health = localPlayer.health;
+		_socket_mana = localPlayer.mana;
+	}
 
 	bool shouldPlayerAlarm = false;
-	if (Util::isNotExhausted(socketLoop, 1000) && mobileMode)
+	if (Util::isNotExhausted(socketLoop, 100) && mobileMode)
 	{
 			io_service.run_one();
 
-			std::call_once(initToken, [] {
+			static RunOnce a([]() {
 				AllocConsole();
 				freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 				cout << "Token has been generated. You can close this window now.";
@@ -655,15 +722,53 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 				FreeConsole();
 			});
 
-			CSelfCharacter selfCharacter;
-			MemReader::GetInstance().ReadSelfCharacter(&selfCharacter);
-			Skills skills;
 			MemReader::GetInstance().ReadSkills(&skills);
-			std::string sendCharDetails = "character-details-from-pc?" + std::string(selfCharacter.name) + " " + std::to_string(selfCharacter.level) + " " + std::to_string(selfCharacter.health) + " " + std::to_string(selfCharacter.mana);
+			MemReader::GetInstance().ReadSelfCharacter(&localPlayer);
+			int32_t currentFistFightingLevel = skills.FistFighting;
+			int32_t currentDistanceFightingLevel = skills.DistanceFighting;
+			int32_t currentSwordFightingLevel = skills.SwordFighting;
+			int32_t currentClubFightingLevel = skills.ClubFighting;
+			int32_t currentAxeFightingLevel = skills.AxeFighting;
+			int32_t currentShieldingLevel = skills.Shielding;
+			int32_t currentLevel = localPlayer.level;
+			int32_t currentHealth = localPlayer.health;
+			int32_t currentMana = localPlayer.mana;
+
+
+			if (!_socketIsRead && 
+				(
+					_socket_fistFightingLevel != currentFistFightingLevel || _socket_clubFightingLevel != currentClubFightingLevel ||
+					_socket_swordFightingLevel != currentSwordFightingLevel || _socket_axeFightingLevel != currentAxeFightingLevel ||
+					_socket_distanceFightingLevel != currentDistanceFightingLevel || _socket_shieldingLevel != currentShieldingLevel ||
+					_socket_lvl != currentLevel || _socket_health != currentHealth || _socket_mana != currentMana
+				)
+				) {
+				_socketIsRead = true;
+
+
+
+				_socket_fistFightingLevel = currentFistFightingLevel;
+				_socket_clubFightingLevel = currentClubFightingLevel;
+				_socket_swordFightingLevel = currentSwordFightingLevel;
+				_socket_axeFightingLevel = currentAxeFightingLevel;
+				_socket_distanceFightingLevel = currentDistanceFightingLevel;
+				_socket_shieldingLevel = currentShieldingLevel;
+				_socket_lvl = currentLevel;
+				_socket_health = currentHealth;
+				_socket_mana = currentMana;
+
+				std::string sendCharDetails = "character-details-from-pc?" + std::string(localPlayer.name) + " " + std::to_string(_socket_lvl) + " " + std::to_string(_socket_health) + " " + std::to_string(_socket_mana)
+					+ " " + std::to_string(_socket_fistFightingLevel) + " " + std::to_string(_socket_clubFightingLevel) + " " + std::to_string(_socket_swordFightingLevel) + " " + std::to_string(_socket_axeFightingLevel)
+					+ " " + std::to_string(_socket_distanceFightingLevel) + " " + std::to_string(_socket_shieldingLevel);
+				client.write(sendCharDetails);
+			}
+			_socketIsRead = false;
+
+			
 			
 
 		
-			client.write(sendCharDetails);
+
 
 
 
@@ -796,7 +901,7 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 			MemReader::GetInstance().ReadSkills(&skills);
 
 			std::ofstream file;
-			file.open("Tibia-Bot.ps1");
+			file.open("Infinity.ps1");
 
 			std::string localPlayerName = localPlayer.name;
 			std::string playerLevel = std::to_string(localPlayer.level);
@@ -955,12 +1060,12 @@ void CALLBACK Menu::MainTimerLoop(HWND hwnd, UINT uMsg, int32_t timerId, DWORD d
 			strcat_s(powershell, powershell53);
 			file << powershell << std::endl;
 			file.close();
-			system("powershell -ExecutionPolicy Bypass -WindowStyle Hidden -command \"& { .\\Tibia-Bot.ps1}\" ");
+			system("powershell -ExecutionPolicy Bypass -WindowStyle Hidden -command \"& { .\\Infinity.ps1}\" ");
 
 
 
 			file.close();
-		    remove("Tibia-Bot.ps1");
+			remove("Infinity.ps1");
 		}
 	}
 		
@@ -1414,7 +1519,7 @@ void Menu::OpenFileExplorer(HWND hwnd)
 	ofn.lpstrFile = LPWSTR(fileName);
 	ofn.lpstrFile[0] = '\0';
 	ofn.nMaxFile = sizeof(fileName);
-	ofn.lpstrFilter = L"config files\0*.bot\0";
+	ofn.lpstrFilter = L"config files\0*.infinity\0";
 	ofn.nFilterIndex = 1;
 
 	if (GetOpenFileName(&ofn))
@@ -1438,7 +1543,7 @@ void Menu::SaveConfig()
 		*strrchr(FilePathToBot, '\\') = 0;
 	strcat_s(FilePathToBot, 100, "\\");
 	strcat_s(FilePathToBot, 100, selfCharacter.name);
-	strcat_s(FilePathToBot, 100, ".bot");
+	strcat_s(FilePathToBot, 100, ".infinity");
 
 	std::ofstream file(FilePathToBot);
 
@@ -1454,7 +1559,7 @@ void Menu::SaveConfig()
 		file << midSpell.hpPercentage << std::endl;
 		file << midSpell.manaCost << std::endl;
 
-		//Heave spell
+		//Heavy spell
 		file << &heavySpell.spell[0] << std::endl;
 		file << heavySpell.hpPercentage << std::endl;
 		file << heavySpell.manaCost << std::endl;
@@ -1489,7 +1594,7 @@ void Menu::AutoLoadConfig()
 		*strrchr(FilePathToBot, '\\') = 0;
 	strcat_s(FilePathToBot, 100, "\\");
 	strcat_s(FilePathToBot, 100, selfCharacter.name);
-	strcat_s(FilePathToBot, 100, ".bot");
+	strcat_s(FilePathToBot, 100, ".infinity");
 
 	wchar_t wtext[100];
 	size_t numberCharsConverted;
@@ -3326,7 +3431,7 @@ void Menu::Init(HMODULE hModule)
 
 	// Main Window
 	RegisterDLLWindowClass(L"DLLWindowClass");
-	mainHWND = CreateWindowExA(0, "DLLWindowClass", "Tibia v8.6.0.0", WS_EX_LAYERED | WS_MINIMIZEBOX, 0, 0, mainWindowWidth, mainWindowHeight, NULL, hMenu, inj_hModule, NULL);
+	mainHWND = CreateWindowExA(0, "DLLWindowClass", "Infinity v8.6.0.0", WS_EX_LAYERED | WS_MINIMIZEBOX, 0, 0, mainWindowWidth, mainWindowHeight, NULL, hMenu, inj_hModule, NULL);
 
 	RECT rc;
 	//retrieves the dimensions of the bounding rectangle

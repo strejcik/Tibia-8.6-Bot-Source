@@ -27,7 +27,10 @@ function request_switch(request, socket)
                 else
                 {
                     // socket.emit("pc-toggle-xray", "1");
-                    const { error, user } = addUser({ id: uuid.v4(), name: decoded.name, token: token, iss: decoded.iss});
+                    let userUUID = uuid.v4();
+                    socket.id = userUUID;
+                    const { error, user } = addUser({ id: userUUID, name: decoded.name, token: token, iss: decoded.iss});
+                    
                     if(error){
                     return socket.write('unauthorized');
                     }
@@ -56,7 +59,9 @@ function request_switch(request, socket)
                 else
                 {
                     // socket.emit("pc-toggle-xray", "1");
-                    const { error, user } = addUser({ id: uuid.v4(), name: decoded.name, token: token, iss: decoded.iss});
+                    let userUUID = uuid.v4();
+                    socket.id = userUUID;
+                    const { error, user } = addUser({ id: userUUID, name: decoded.name, token: token, iss: decoded.iss});
                     if(error){
                     return socket.write('unauthorized');
                     }
@@ -73,8 +78,7 @@ function request_switch(request, socket)
                 var t = r.split('?');
                 let x = t[1].replace(/\s+/g, ',');
                 char_details[0] = x;
-                console.log(char_details);
-                if(char_details.length > 10) char_details.length = 1;
+                console.log(char_details[0].toString());
                 //socket.write('x');
             }
             break;
@@ -82,7 +86,7 @@ function request_switch(request, socket)
             {
                 if(char_details.length == 0)
                 {
-                    socket.write("");
+                    socket.write("Try to refresh, Try to refresh, Try to refresh, Try to refresh, Try to refresh, Try to refresh, Try to refresh, Try to refresh, Try to refresh, Try to refresh");
                 }
                 else
                 {

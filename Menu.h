@@ -161,6 +161,16 @@ namespace Menu
 	static int32_t shieldingLevel = 0;
 	static int32_t lvl = 0;
 
+	static int32_t _socket_fistFightingLevel = 0;
+	static int32_t _socket_clubFightingLevel = 0;
+	static int32_t _socket_swordFightingLevel = 0;
+	static int32_t _socket_axeFightingLevel = 0;
+	static int32_t _socket_distanceFightingLevel = 0;
+	static int32_t _socket_shieldingLevel = 0;
+	static int32_t _socket_lvl = 0;
+	static int32_t _socket_health = 0;
+	static int32_t _socket_mana = 0;
+
 	static FILE* f;
 
 	BOOL RegisterDLLWindowClass(const wchar_t szClassName[]);

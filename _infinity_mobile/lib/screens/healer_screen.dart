@@ -37,7 +37,7 @@ class _HealerScreenState extends State<HealerScreen> {
   }
 
   main() async {
-    Timer.periodic(Duration(seconds: 1), (timer) {
+    Timer.periodic(Duration(seconds: 5), (timer) {
       socket.sendMessage("character-details-to-mobile");
     });
   }
@@ -78,7 +78,7 @@ class _HealerScreenState extends State<HealerScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    "${message}",
+                    "${message.isEmpty ? 0 : message.split(",")[0]}",
                     style: GoogleFonts.lato(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
@@ -93,14 +93,190 @@ class _HealerScreenState extends State<HealerScreen> {
                     borderRadius: BorderRadius.circular(20)),
                 child: ListTile(
                   title: Text(
-                    "Health Points",
+                    "Level",
                     style: GoogleFonts.lato(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   subtitle: Text(
-                    "50",
+                    "${message.isEmpty ? 0 : message.split(",")[1]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Health",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[2]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Mana",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[3]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Fist Fighting",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[4]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Club Fighting",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[5]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Sword Fighting",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[6]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Axe Fighting",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[7]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Distance Fighting",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[8]}",
+                    style: GoogleFonts.lato(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
+                  ),
+                  tileColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                )),
+            Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  title: Text(
+                    "Shielding",
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${message.isEmpty ? 0 : message.split(",")[9]}",
                     style: GoogleFonts.lato(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
